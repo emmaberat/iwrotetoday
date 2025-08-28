@@ -602,17 +602,10 @@
                 userStreak = parseInt(localStorage.getItem('userStreak'));
             }
             
-            // Check if user has already checked in today
-            const today = new Date().toDateString();
-            if (localStorage.getItem('lastCheckIn') === today) {
-                // User already checked in today - show results screen
-                welcomeScreen.style.display = 'none';
-                resultsScreen.style.display = 'flex';
-                wroteToday = true;
-                showCelebration();
-                setTimeout(showQuote, 1000);
-                setTimeout(showQuills, 2000);
-            }
+            // Always show welcome screen first
+            welcomeScreen.style.display = 'flex';
+            resultsScreen.style.display = 'none';
+            wordScreen.style.display = 'none';
         }
 
         // Handle check-in
@@ -622,6 +615,13 @@
             
             // Check if already checked in today
             if (localStorage.getItem('lastCheckIn') === todayString) {
+                // User already checked in today - show results without updating streak
+                welcomeScreen.style.display = 'none';
+                resultsScreen.style.display = 'flex';
+                wroteToday = true;
+                showCelebration();
+                setTimeout(showQuote, 1000);
+                setTimeout(showQuills, 2000);
                 return;
             }
             
