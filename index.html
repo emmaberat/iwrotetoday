@@ -95,6 +95,7 @@
             transform: translate(-50%, -50%);
             opacity: 0;
             animation: fadeIn 0.8s forwards, explode 0.8s ease-in-out 2s forwards;
+            z-index: 10;
         }
 
         .quote-container {
@@ -104,6 +105,7 @@
             animation: fadeInUp 1s forwards;
             animation-delay: 2.5s;
             margin-top: 2rem;
+            margin-bottom: 3rem;
         }
 
         .quote-text {
@@ -136,6 +138,53 @@
             color: #F5F5F0;
         }
 
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: #2D4D32;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .back-button:hover {
+            background-color: rgba(45, 77, 50, 0.1);
+        }
+
+        .back-button svg {
+            margin-right: 0.5rem;
+        }
+
+        .quills-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 2rem;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+            animation-delay: 6.5s;
+        }
+
+        .quill {
+            width: 24px;
+            height: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        .quill.lying {
+            transform: rotate(-90deg) translateY(10px);
+            opacity: 0.7;
+        }
+
         .leaf {
             position: absolute;
             width: 15px;
@@ -159,11 +208,21 @@
             font-size: 1.5rem;
             text-align: center;
             animation: fadeInOut 3s ease;
+            z-index: 20;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #2D4D32;
+            opacity: 0;
+            pointer-events: none;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -40%); }
-            to { opacity: 1; transform: translate(-50%, -50%); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes explode {
@@ -201,20 +260,22 @@
             50% { transform: translateX(var(--sway-distance)); }
         }
 
+        @keyframes confettiFall {
+            0% { 
+                opacity: 1;
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) rotate(var(--r)) scale(0.5);
+            }
+        }
+
         footer {
             text-align: center;
             margin-top: 3rem;
             color: #5A5A5A;
             font-size: 0.9rem;
-        }
-
-        /* Particle effect for the explosion */
-        .particle {
-            position: absolute;
-            background-color: #2D4D32;
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: 0;
         }
 
         /* Responsive design */
@@ -231,6 +292,15 @@
             .celebration {
                 font-size: 3rem;
             }
+            
+            .quills-container {
+                gap: 10px;
+            }
+            
+            .quill {
+                width: 20px;
+                height: 35px;
+            }
         }
     </style>
 </head>
@@ -241,6 +311,13 @@
     </div>
 
     <div class="results-screen" id="results-screen">
+        <button class="back-button" id="back-button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2D4D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back
+        </button>
+        
         <div class="celebration" id="celebration"></div>
         
         <div class="quote-container" id="quote-container">
@@ -248,6 +325,8 @@
             <div class="quote-attribution" id="quote-attribution"></div>
             <a class="book-link" id="book-link" target="_blank">Find this book at Bookshop.org</a>
         </div>
+        
+        <div class="quills-container" id="quills-container"></div>
     </div>
 
     <footer>
@@ -258,6 +337,7 @@
         // User data
         let userStreak = 0;
         let lastCheckIn = null;
+        let wroteToday = true;
         
         // Celebration phrases
         const celebrations = [
@@ -334,22 +414,31 @@
         const resultsScreen = document.getElementById('results-screen');
         const checkinButton = document.getElementById('checkin-button');
         const tomorrowLink = document.getElementById('tomorrow-link');
+        const backButton = document.getElementById('back-button');
         const celebrationElement = document.getElementById('celebration');
         const quoteContainer = document.getElementById('quote-container');
         const quoteText = document.getElementById('quote-text');
         const quoteAttribution = document.getElementById('quote-attribution');
         const bookLink = document.getElementById('book-link');
+        const quillsContainer = document.getElementById('quills-container');
 
         // Initialize the app
         function initApp() {
+            // Load user streak
+            if (localStorage.getItem('userStreak')) {
+                userStreak = parseInt(localStorage.getItem('userStreak'));
+            }
+            
             // Check if user has already checked in today
             const today = new Date().toDateString();
             if (localStorage.getItem('lastCheckIn') === today) {
                 // User already checked in today - show results screen
                 welcomeScreen.style.display = 'none';
                 resultsScreen.style.display = 'flex';
+                wroteToday = true;
                 showCelebration();
                 setTimeout(showQuote, 2500);
+                setTimeout(showQuills, 6500);
             }
         }
 
@@ -379,6 +468,7 @@
             // Save check-in and streak
             localStorage.setItem('lastCheckIn', todayString);
             localStorage.setItem('userStreak', userStreak);
+            wroteToday = true;
             
             // Switch to results screen
             welcomeScreen.style.display = 'none';
@@ -387,6 +477,7 @@
             // Show celebration and then quote
             showCelebration();
             setTimeout(showQuote, 2500);
+            setTimeout(showQuills, 6500);
             
             // Check for milestone
             if (MILESTONES.includes(userStreak)) {
@@ -399,7 +490,42 @@
 
         // Handle "I'll write tomorrow" link
         tomorrowLink.addEventListener('click', function() {
-            alert("No problem! Looking forward to your writing tomorrow.");
+            // Set wroteToday to false for lying quill
+            wroteToday = false;
+            
+            // Switch to results screen but don't update streak
+            welcomeScreen.style.display = 'none';
+            resultsScreen.style.display = 'flex';
+            
+            // Show message and quills only
+            celebrationElement.textContent = "Tomorrow is a new day";
+            celebrationElement.style.animation = 'fadeIn 0.8s forwards';
+            setTimeout(() => {
+                celebrationElement.style.animation = 'explode 0.8s ease-in-out forwards';
+                createConfetti();
+            }, 2000);
+            
+            setTimeout(() => {
+                showQuote();
+                setTimeout(showQuills, 4000);
+            }, 3000);
+        });
+
+        // Handle back button
+        backButton.addEventListener('click', function() {
+            resultsScreen.style.display = 'none';
+            welcomeScreen.style.display = 'flex';
+            
+            // Reset celebration and quote for next time
+            celebrationElement.style.animation = 'none';
+            quoteContainer.style.animation = 'none';
+            setTimeout(() => {
+                celebrationElement.style.animation = '';
+                quoteContainer.style.animation = '';
+            }, 10);
+            
+            // Clear quills
+            quillsContainer.innerHTML = '';
         });
 
         // Show celebration message
@@ -407,6 +533,9 @@
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
             celebrationElement.textContent = celebrations[dayOfYear % celebrations.length];
+            
+            // Create confetti explosion after delay
+            setTimeout(createConfetti, 2000);
         }
 
         // Show quote
@@ -420,6 +549,79 @@
             
             // Set book link to Bookshop.org
             bookLink.href = quoteData.links.bookshop;
+        }
+
+        // Show quills based on streak
+        function showQuills() {
+            quillsContainer.innerHTML = '';
+            
+            for (let i = 0; i < userStreak; i++) {
+                const quill = document.createElement('div');
+                quill.className = 'quill';
+                
+                // If this is the current day and user didn't write, show lying quill
+                if (i === userStreak - 1 && !wroteToday) {
+                    quill.classList.add('lying');
+                }
+                
+                // Quill SVG
+                quill.innerHTML = `
+                    <svg width="100%" height="100%" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 38C6 34 8 28 12 22C16 16 18 12 12 6C6 0 8 6 12 12C16 18 20 24 16 30C12 36 10 38 2 38Z" fill="#2D4D32"/>
+                        <path d="M12 6C12 2 16 0 20 2C24 4 22 8 18 10C14 12 12 10 12 6Z" fill="#8B4513"/>
+                        <path d="M2 38L4 36" stroke="#5A5A5A" stroke-width="1.5"/>
+                    </svg>
+                `;
+                
+                quillsContainer.appendChild(quill);
+            }
+        }
+
+        // Create confetti explosion effect
+        function createConfetti() {
+            const confettiCount = 50;
+            const colors = ['#2D4D32', '#3A6B41', '#448D4E', '#57A861', '#6BC576'];
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random properties
+                const size = 5 + Math.random() * 10;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Set styles
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                
+                // Position at celebration element
+                const celebrationRect = celebrationElement.getBoundingClientRect();
+                confetti.style.left = `${celebrationRect.left + celebrationRect.width/2}px`;
+                confetti.style.top = `${celebrationRect.top + celebrationRect.height/2}px`;
+                
+                // Set animation variables
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 200;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                const rotation = Math.random() * 360;
+                
+                confetti.style.setProperty('--tx', `${tx}px`);
+                confetti.style.setProperty('--ty', `${ty}px`);
+                confetti.style.setProperty('--r', `${rotation}deg`);
+                
+                // Animate
+                confetti.style.animation = `confettiFall ${0.5 + Math.random()}s ease-out forwards`;
+                
+                document.body.appendChild(confetti);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 1000);
+            }
         }
 
         // Create leaf confetti animation
