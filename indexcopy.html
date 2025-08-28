@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Wrote Today</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #F5F5F0;
+            color: #3D3D3D;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+            transition: opacity 0.5s ease;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            width: 100%;
+        }
+
+        .checkin-btn {
+            background: #2D4D32;
+            color: #F0F4F0;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Georgia', serif;
+            font-size: 1.8rem;
+            padding: 1.8rem 4rem;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-bottom: 1.5rem;
+            font-weight: normal;
+        }
+
+        .checkin-btn:hover {
+            background: #26422A;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .tomorrow-link {
+            color: #223D27;
+            font-style: italic;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border-bottom: 1px dashed #223D27;
+            padding-bottom: 2px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tomorrow-link:hover {
+            border-bottom-style: solid;
+            color: #1A321F;
+        }
+
+        .results-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .celebration {
+            font-size: 4rem;
+            color: #2D4D32;
+            margin-bottom: 2rem;
+            min-height: 6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: fadeIn 0.8s forwards, explode 0.8s ease-in-out 2s forwards;
+        }
+
+        .quote-container {
+            max-width: 600px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s forwards;
+            animation-delay: 2.5s;
+            margin-top: 2rem;
+        }
+
+        .quote-text {
+            font-style: italic;
+            font-size: 1.8rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+            color: #2D4D32;
+        }
+
+        .quote-attribution {
+            font-size: 1.2rem;
+            color: #5A5A5A;
+            margin-bottom: 1.5rem;
+        }
+
+        .book-link {
+            color: #2D4D32;
+            text-decoration: none;
+            border-bottom: 1px solid #2D4D32;
+            font-size: 1rem;
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background-color: rgba(45, 77, 50, 0.1);
+        }
+
+        .book-link:hover {
+            background-color: #2D4D32;
+            color: #F5F5F0;
+        }
+
+        .leaf {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-size: contain;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.9;
+        }
+
+        .leaf.spring {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234CAF50"><path d="M17 8C8 10 5.9 16.8 3 22c5-3 11-2.5 13-2 1 4 3 6 6 7 1-6-3-11-5-19z"/></svg>');
+        }
+
+        .milestone-message {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            color: #2D4D32;
+            font-size: 1.5rem;
+            text-align: center;
+            animation: fadeInOut 3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        @keyframes explode {
+            0% { 
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+            100% { 
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(2);
+                display: none;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(-20px); }
+            20%, 80% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(var(--sway-distance)); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #5A5A5A;
+            font-size: 0.9rem;
+        }
+
+        /* Particle effect for the explosion */
+        .particle {
+            position: absolute;
+            background-color: #2D4D32;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .checkin-btn {
+                font-size: 1.5rem;
+                padding: 1.5rem 3rem;
+            }
+            
+            .quote-text {
+                font-size: 1.5rem;
+            }
+            
+            .celebration {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-screen" id="welcome-screen">
+        <button class="checkin-btn" id="checkin-button">i wrote today</button>
+        <a class="tomorrow-link" id="tomorrow-link">i didn't, but i will tomorrow!</a>
+    </div>
+
+    <div class="results-screen" id="results-screen">
+        <div class="celebration" id="celebration"></div>
+        
+        <div class="quote-container" id="quote-container">
+            <div class="quote-text" id="quote-text"></div>
+            <div class="quote-attribution" id="quote-attribution"></div>
+            <a class="book-link" id="book-link" target="_blank">Find this book at Bookshop.org</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>Celebrate your writing journey, one day at a time</p>
+    </footer>
+
+    <script>
+        // User data
+        let userStreak = 0;
+        let lastCheckIn = null;
+        
+        // Celebration phrases
+        const celebrations = [
+            "¡Magnífico!", "Fantastique!", "Perfetto!", "Отлично!", "太棒了!", 
+            "Wunderbar!", "Świetnie!", "ممتاز!", "เยี่ยมมาก!", "Génial!",
+            "Words well spent!", "Sentence magic!", "Another page conquered!",
+            "The muse approves!", "Well written!"
+        ];
+
+        // Novel quotes database
+        const novelQuotes = [
+            {
+                text: "It was a bright cold day in April, and the clocks were striking thirteen.",
+                author: "George Orwell",
+                book: "1984",
+                year: 1949,
+                gender: "male",
+                links: {
+                    amazon: "https://www.amazon.com/dp/0451524934/",
+                    bookshop: "https://bookshop.org/a/123/9780451524935"
+                }
+            },
+            {
+                text: "I am writing this under an appreciable mental strain.",
+                author: "H.P. Lovecraft",
+                book: "The Call of Cthulhu",
+                year: 1928,
+                gender: "male",
+                links: {
+                    amazon: "https://www.amazon.com/dp/1503262070/",
+                    bookshop: "https://bookshop.org/a/123/9781503262077"
+                }
+            },
+            {
+                text: "The snow in the mountains was melting and Bunny had been dead for several weeks.",
+                author: "Donna Tartt",
+                book: "The Secret History",
+                year: 1992,
+                gender: "female",
+                links: {
+                    amazon: "https://www.amazon.com/dp/1400031702/",
+                    bookshop: "https://bookshop.org/a/123/9781400031702"
+                }
+            },
+            {
+                text: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.",
+                author: "Jane Austen",
+                book: "Pride and Prejudice",
+                year: 1813,
+                gender: "female",
+                links: {
+                    amazon: "https://www.amazon.com/dp/0141439513/",
+                    bookshop: "https://bookshop.org/a/123/9780141439518"
+                }
+            },
+            {
+                text: "Happy families are all alike; every unhappy family is unhappy in its own way.",
+                author: "Leo Tolstoy",
+                book: "Anna Karenina",
+                year: 1877,
+                gender: "male",
+                links: {
+                    amazon: "https://www.amazon.com/dp/0143035002/",
+                    bookshop: "https://bookshop.org/a/123/9780143035008"
+                }
+            }
+        ];
+
+        // Milestones that trigger effects
+        const MILESTONES = [3, 7, 14, 30, 60, 180];
+
+        // DOM elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const checkinButton = document.getElementById('checkin-button');
+        const tomorrowLink = document.getElementById('tomorrow-link');
+        const celebrationElement = document.getElementById('celebration');
+        const quoteContainer = document.getElementById('quote-container');
+        const quoteText = document.getElementById('quote-text');
+        const quoteAttribution = document.getElementById('quote-attribution');
+        const bookLink = document.getElementById('book-link');
+
+        // Initialize the app
+        function initApp() {
+            // Check if user has already checked in today
+            const today = new Date().toDateString();
+            if (localStorage.getItem('lastCheckIn') === today) {
+                // User already checked in today - show results screen
+                welcomeScreen.style.display = 'none';
+                resultsScreen.style.display = 'flex';
+                showCelebration();
+                setTimeout(showQuote, 2500);
+            }
+        }
+
+        // Handle check-in
+        checkinButton.addEventListener('click', function() {
+            const today = new Date();
+            const todayString = today.toDateString();
+            
+            // Check if already checked in today
+            if (localStorage.getItem('lastCheckIn') === todayString) {
+                return;
+            }
+            
+            // Check if streak continues (wrote yesterday)
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayString = yesterday.toDateString();
+            
+            if (localStorage.getItem('lastCheckIn') !== yesterdayString) {
+                // Streak broken
+                userStreak = 1;
+            } else {
+                // Continue streak
+                userStreak++;
+            }
+            
+            // Save check-in and streak
+            localStorage.setItem('lastCheckIn', todayString);
+            localStorage.setItem('userStreak', userStreak);
+            
+            // Switch to results screen
+            welcomeScreen.style.display = 'none';
+            resultsScreen.style.display = 'flex';
+            
+            // Show celebration and then quote
+            showCelebration();
+            setTimeout(showQuote, 2500);
+            
+            // Check for milestone
+            if (MILESTONES.includes(userStreak)) {
+                setTimeout(() => {
+                    createLeafConfetti();
+                    showMilestoneMessage();
+                }, 2000);
+            }
+        });
+
+        // Handle "I'll write tomorrow" link
+        tomorrowLink.addEventListener('click', function() {
+            alert("No problem! Looking forward to your writing tomorrow.");
+        });
+
+        // Show celebration message
+        function showCelebration() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+            celebrationElement.textContent = celebrations[dayOfYear % celebrations.length];
+        }
+
+        // Show quote
+        function showQuote() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+            const quoteData = novelQuotes[dayOfYear % novelQuotes.length];
+            
+            quoteText.textContent = `"${quoteData.text}"`;
+            quoteAttribution.textContent = `${quoteData.book}, ${quoteData.author}`;
+            
+            // Set book link to Bookshop.org
+            bookLink.href = quoteData.links.bookshop;
+        }
+
+        // Create leaf confetti animation
+        function createLeafConfetti() {
+            const leafCount = Math.min(50, userStreak * 2);
+            const season = getSeason();
+            const leafType = season === 'summer' ? 'spring' : season;
+            
+            for (let i = 0; i < leafCount; i++) {
+                const leaf = document.createElement('div');
+                leaf.className = `leaf ${leafType}`;
+                leaf.style.left = `${Math.random() * 100}vw`;
+                leaf.style.top = '-20px';
+                leaf.style.setProperty('--sway-distance', `${Math.random() > 0.5 ? '' : '-'}${50 + Math.random() * 30}px`);
+                
+                const duration = `${5 + Math.random() * 10}s`;
+                const delay = `${Math.random() * 3}s`;
+                leaf.style.animation = `
+                    fall ${duration} ${delay} linear infinite,
+                    sway ${duration} ${delay} ease-in-out infinite
+                `;
+                
+                document.body.appendChild(leaf);
+            }
+        }
+
+        // Show milestone message
+        function showMilestoneMessage() {
+            const messages = {
+                3: "First milestone!",
+                7: "Weekly streak!",
+                14: "Two weeks strong!",
+                30: "Month of writing!",
+                60: "Two months!",
+                180: "Half a year!"
+            };
+            
+            const msg = document.createElement('div');
+            msg.className = 'milestone-message';
+            msg.textContent = messages[userStreak];
+            
+            document.body.appendChild(msg);
+            
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+
+        // Helper: Get current season
+        function getSeason() {
+            const month = new Date().getMonth();
+            if (month >= 2 && month <= 4) return 'spring';
+            if (month >= 5 && month <= 7) return 'summer';
+            if (month >= 8 && month <= 10) return 'autumn';
+            return 'winter';
+        }
+
+        // Initialize the app
+        initApp();
+    </script>
+</body>
+</html>
