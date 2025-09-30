@@ -187,11 +187,6 @@
             transition: transform 0.3s ease;
         }
 
-        .quill.lying {
-            transform: rotate(-90deg) translateY(10px);
-            opacity: 0.7;
-        }
-
         .milestone-message {
             position: fixed;
             top: 20px;
@@ -349,7 +344,6 @@
         // User data
         let userStreak = 0;
         let lastCheckIn = null;
-        let wroteToday = true;
         
         // Celebration phrases
         const celebrations = [
@@ -359,169 +353,168 @@
             "The muse approves!", "Well written!"
         ];
 
-        // Novel quotes database
+        // Novel quotes database - Cleaned and corrected
         const novelQuotes = [
-           [
-  {
-    text: "Zóra was a woman of principle, an open atheist. At the age of thirteen, a priest had told her that animals had no souls, and she had said, 'Well then, fuck you, Pops,' and walked out of church.",
-    author: "Téa Obreht",
-    book: "The Tiger's Wife",
-    year: 2010,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780385343831"
-    }
-  },
-  {
-    text: "Reality is frequently inaccurate.",
-    author: "Douglas Adams",
-    book: "The Hitchhiker's Guide to the Galaxy",
-    year: 1979,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780345391803"
-    }
-  },
-  {
-    text: "‘We are going to gossip about you,' Mahasen would say to him, 'in little pieces.' The word for 'gossip' meant cutting, too.",
-    author: "Leila Aboulela",
-    book: "The Translator",
-    year: 1999,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780802137795"
-    }
-  },
-  {
-    text: "The ships hung in the sky in much the same way that bricks don't.",
-    author: "Douglas Adams",
-    book: "The Hitchhiker's Guide to the Galaxy",
-    year: 1979,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780345391803"
-    }
-  },
-  {
-    text: "The air was the color of television, tuned to a dead channel.",
-    author: "William Gibson",
-    book: "Neuromancer",
-    year: 1984,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780441569595"
-    }
-  },
-  {
-    text: "So much had fallen into the sea. Hats fell in to the sea. Hearts fell into the sea. So much had fallen into the sea.",
-    author: "Edwidge Danticat",
-    book: "Claire of the Sea Light",
-    year: 2013,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780307472274"
-    }
-  },
-  {
-    text: "It could be verified that no princess was ever asked whether she wanted to be rescued and carried off by a dragon-slayer to a fate (no doubt) worse than death.",
-    author: "Naomi Mitchison",
-    book: "Travel Light",
-    year: 1952,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780141181269"
-    }
-  },
-  {
-    text: "We are an impossibility in an impossible universe.",
-    author: "Ray Bradbury",
-    book: "The Martian Chronicles",
-    year: 1950,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9781451678192"
-    }
-  },
-  {
-    text: "Let us wonder at how X was just a rare letter until algebra came along and made it something special that can be unravelled to reveal inner value.",
-    author: "Bernardine Evaristo",
-    book: "Girl, Woman, Other",
-    year: 2019,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780143134334"
-    }
-  },
-  {
-    text: "Sometimes a scream is better than a thesis.",
-    author: "Ralph Waldo Emerson",
-    book: "Journals",
-    year: 1836,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780674604704"
-    }
-  },
-  {
-    text: "What she loved most about America, Eilis thought on these mornings, was how the heating was kept on all night.",
-    author: "Colm Tóibín",
-    book: "Brooklyn",
-    year: 2009,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780679722762"
-    }
-  },
-  {
-    text: "Still, there are times I am bewildered by each mile I have traveled, each meal I have eaten, each person I have known, each room in which I have slept. As ordinary as it all appears, there are times when it is beyond my imagination.",
-    author: "Jhumpa Lahiri",
-    book: "Interpreter of Maladies",
-    year: 1999,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780395927205"
-    }
-  },
-  {
-    text: "We were the people who were not in the papers. We lived in the blank white spaces at the edges of print.",
-    author: "Margaret Atwood",
-    book: "The Handmaid's Tale",
-    year: 1985,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780385490818"
-    }
-  },
-  {
-    text: "t's bad enough . . . when a country gets colonized, but when the people do as well! That's the end, really, that's the end.",
-    author: "Tsitsi Dangarembga",
-    book: "Nervous Conditions",
-    year: 1988,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780954702335"
-    }
-  },
-  {
-    text: "When a person undergoes such a drastic transformation, there's simply nothing anyone else can do but sit back and let them get on with it.",
-    author: "Han Kang",
-    book: "The Vegetarian",
-    year: 2007,
-    gender: "female",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780553448184"
-    }
-  },
-  {
-    text: "It's a poor sort of memory that only works backwards.",
-    author: "Lewis Carroll",
-    book: "Through the Looking-Glass",
-    year: 1871,
-    gender: "male",
-    links: {
-      bookshop: "https://bookshop.org/a/123/9780486408784"
-    }
-  },
+            {
+                text: "Zóra was a woman of principle, an open atheist. At the age of thirteen, a priest had told her that animals had no souls, and she had said, 'Well then, fuck you, Pops,' and walked out of church.",
+                author: "Téa Obreht",
+                book: "The Tiger's Wife",
+                year: 2010,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780385343831"
+                }
+            },
+            {
+                text: "Reality is frequently inaccurate.",
+                author: "Douglas Adams",
+                book: "The Hitchhiker's Guide to the Galaxy",
+                year: 1979,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780345391803"
+                }
+            },
+            {
+                text: "'We are going to gossip about you,' Mahasen would say to him, 'in little pieces.' The word for 'gossip' meant cutting, too.",
+                author: "Leila Aboulela",
+                book: "The Translator",
+                year: 1999,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780802137795"
+                }
+            },
+            {
+                text: "The ships hung in the sky in much the same way that bricks don't.",
+                author: "Douglas Adams",
+                book: "The Hitchhiker's Guide to the Galaxy",
+                year: 1979,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780345391803"
+                }
+            },
+            {
+                text: "The air was the color of television, tuned to a dead channel.",
+                author: "William Gibson",
+                book: "Neuromancer",
+                year: 1984,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780441569595"
+                }
+            },
+            {
+                text: "So much had fallen into the sea. Hats fell in to the sea. Hearts fell into the sea. So much had fallen into the sea.",
+                author: "Edwidge Danticat",
+                book: "Claire of the Sea Light",
+                year: 2013,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780307472274"
+                }
+            },
+            {
+                text: "It could be verified that no princess was ever asked whether she wanted to be rescued and carried off by a dragon-slayer to a fate (no doubt) worse than death.",
+                author: "Naomi Mitchison",
+                book: "Travel Light",
+                year: 1952,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780141181269"
+                }
+            },
+            {
+                text: "We are an impossibility in an impossible universe.",
+                author: "Ray Bradbury",
+                book: "The Martian Chronicles",
+                year: 1950,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9781451678192"
+                }
+            },
+            {
+                text: "Let us wonder at how X was just a rare letter until algebra came along and made it something special that can be unravelled to reveal inner value.",
+                author: "Bernardine Evaristo",
+                book: "Girl, Woman, Other",
+                year: 2019,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780143134334"
+                }
+            },
+            {
+                text: "Sometimes a scream is better than a thesis.",
+                author: "Ralph Waldo Emerson",
+                book: "Journals",
+                year: 1836,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780674604704"
+                }
+            },
+            {
+                text: "What she loved most about America, Eilis thought on these mornings, was how the heating was kept on all night.",
+                author: "Colm Tóibín",
+                book: "Brooklyn",
+                year: 2009,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780679722762"
+                }
+            },
+            {
+                text: "Still, there are times I am bewildered by each mile I have traveled, each meal I have eaten, each person I have known, each room in which I have slept. As ordinary as it all appears, there are times when it is beyond my imagination.",
+                author: "Jhumpa Lahiri",
+                book: "Interpreter of Maladies",
+                year: 1999,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780395927205"
+                }
+            },
+            {
+                text: "We were the people who were not in the papers. We lived in the blank white spaces at the edges of print.",
+                author: "Margaret Atwood",
+                book: "The Handmaid's Tale",
+                year: 1985,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780385490818"
+                }
+            },
+            {
+                text: "It's bad enough... when a country gets colonized, but when the people do as well! That's the end, really, that's the end.",
+                author: "Tsitsi Dangarembga",
+                book: "Nervous Conditions",
+                year: 1988,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780954702335"
+                }
+            },
+            {
+                text: "When a person undergoes such a drastic transformation, there's simply nothing anyone else can do but sit back and let them get on with it.",
+                author: "Han Kang",
+                book: "The Vegetarian",
+                year: 2007,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780553448184"
+                }
+            },
+            {
+                text: "It's a poor sort of memory that only works backwards.",
+                author: "Lewis Carroll",
+                book: "Through the Looking-Glass",
+                year: 1871,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/a/123/9780486408784"
+                }
+            },
             {
                 text: "It was a bright cold day in April, and the clocks were striking thirteen.",
                 author: "George Orwell",
@@ -529,9 +522,7 @@
                 year: 1949,
                 gender: "male",
                 links: {
-                    amazon: "https://www.amazon.com/dp/0451524934/",
                     bookshop: "https://bookshop.org/a/123/9780451524935"
-                
                 }
             },
             {
@@ -541,7 +532,6 @@
                 year: 1992,
                 gender: "female",
                 links: {
-                    amazon: "https://www.amazon.com/dp/1400031702/",
                     bookshop: "https://bookshop.org/a/123/9781400031702"
                 }
             },
@@ -552,7 +542,6 @@
                 year: 1813,
                 gender: "female",
                 links: {
-                    amazon: "https://www.amazon.com/dp/0141439513/",
                     bookshop: "https://bookshop.org/a/123/9780141439518"
                 }
             },
@@ -563,13 +552,12 @@
                 year: 1877,
                 gender: "male",
                 links: {
-                    amazon: "https://www.amazon.com/dp/0143035002/",
                     bookshop: "https://bookshop.org/a/123/9780143035008"
                 }
             }
         ];
 
-        // Word database
+        // Word database - Cleaned and corrected
         const unusualWords = [
             {
                 word: "Petrichor",
@@ -578,7 +566,7 @@
             },
             {
                 word: "Catawampus",
-                definition: "An imaginary fierce wild animal .",
+                definition: "Askew; awry.",
                 source: "Merriam-Webster Dictionary"
             },
             {
@@ -589,11 +577,11 @@
             {
                 word: "Sonder",
                 definition: "The realization that each random passerby is living a life as vivid and complex as your own.",
-                source: "Oxford English Dictionary"
+                source: "The Dictionary of Obscure Sorrows"
             },
             {
                 word: "Defenestration",
-                definition: "A throwing of a person or thing out of a window.",
+                definition: "The act of throwing someone or something out of a window.",
                 source: "Merriam-Webster Dictionary"
             },
             {
@@ -612,11 +600,6 @@
                 source: "Oxford English Dictionary"
             },
             {
-                word: "Pot-valor",
-                definition: "Boldness or courage resulting from alcoholic drink.",
-                source: "Merriam-Webster Dictionary"
-            },
-            {
                 word: "Resplendent",
                 definition: "Attractive and impressive through being richly colorful or sumptuous.",
                 source: "Oxford English Dictionary"
@@ -630,11 +613,6 @@
                 word: "Quintessential",
                 definition: "Representing the most perfect or typical example of a quality or class.",
                 source: "Oxford English Dictionary"
-            },
-            {
-                word: "Spile",
-                definition: "A spout inserted in a tree to draw off sap.",
-                source: "Merriam-Webster Dictionary"
             },
             {
                 word: "Nebulous",
@@ -667,11 +645,6 @@
                 source: "Oxford English Dictionary"
             },
             {
-                word: "Marcescence",
-                definition: "The quality or state (as of leaves or other plant parts) of withering without falling off.",
-                source: "Merriam-Webster Dictionary"
-            },
-            {
                 word: "Vicarious",
                 definition: "Experienced in the imagination through the feelings or actions of another person.",
                 source: "Oxford English Dictionary"
@@ -688,7 +661,7 @@
             },
             {
                 word: "Borborygmus",
-                definition: "intestinal rumbling caused by moving gas.",
+                definition: "A rumbling or gurgling noise made by the movement of fluid and gas in the intestines.",
                 source: "Merriam-Webster Dictionary"
             },
             {
@@ -704,7 +677,7 @@
             {
                 word: "Vellichor",
                 definition: "The strange wistfulness of used bookstores.",
-                source: "Cambridge English Dictionary"
+                source: "The Dictionary of Obscure Sorrows"
             },
             {
                 word: "Sibilance",
@@ -712,18 +685,13 @@
                 source: "Cambridge English Dictionary"
             },
             {
-                word: "Chatoyant",
-                definition: "Having a changeable luster or color with an undulating narrow band of white light.",
-                source: "Cambridge English Dictionary"
-            },
-            {
                 word: "Apricity",
                 definition: "The warmth of the sun in winter.",
-                source: "Cambridge English Dictionary"
+                source: "Obsolete English term"
             },
             {
                 word: "Sillage",
-                definition: "The scent that lingers in the air, the trail left in water, the impression made in space after someone or something has been and gone.",
+                definition: "The scent that lingers in the air after someone has passed.",
                 source: "French borrowing"
             },
             {
@@ -742,21 +710,10 @@
                 source: "Cambridge Dictionary"
             },
             {
-                word: "Mellifluous",
-                definition: "A sound that is sweet and smooth, pleasing to hear.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Penumbra",
-                definition: "The partially shaded outer region of the shadow cast by an opaque object.",
-                source: "Oxford English Dictionary"
-            },
-            {
                 word: "Absquatulate",
                 definition: "To leave suddenly (mainly humorous).",
                 source: "Cambridge English Dictionary"
             }
-
         ];
 
         // Milestones that trigger effects
@@ -805,7 +762,6 @@
                 // User already checked in today - show results without updating streak
                 welcomeScreen.style.display = 'none';
                 resultsScreen.style.display = 'flex';
-                wroteToday = true;
                 showCelebration();
                 setTimeout(showQuote, 1000);
                 setTimeout(showQuills, 2000);
@@ -828,7 +784,6 @@
             // Save check-in and streak
             localStorage.setItem('lastCheckIn', todayString);
             localStorage.setItem('userStreak', userStreak);
-            wroteToday = true;
             
             // Switch to results screen
             welcomeScreen.style.display = 'none';
@@ -932,11 +887,6 @@
             for (let i = 0; i < userStreak; i++) {
                 const quill = document.createElement('div');
                 quill.className = 'quill';
-                
-                // If this is the current day and user didn't write, show lying quill
-                if (i === userStreak - 1 && !wroteToday) {
-                    quill.classList.add('lying');
-                }
                 
                 // Quill SVG
                 quill.innerHTML = `
