@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <filter id="pen" x="-10%" y="-10%" width="120%" height="120%">
+    <!-- A slightly shaky hand -->
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7" result="wobble"/>
+    <feDisplacementMap in="SourceGraphic" in2="wobble" scale="4" xChannelSelector="R" yChannelSelector="G" result="line"/>
+    <!-- Ballpoint ink skips a little on paper -->
+    <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" seed="3" result="skip"/>
+    <feColorMatrix in="skip" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0.55" result="skipAlpha"/>
+    <feComposite in="line" in2="skipAlpha" operator="in"/>
+  </filter>
+  <g fill="none" stroke="#24379A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#pen)">
+    <!-- Face, drawn in one go so the end overshoots the start -->
+    <path d="M70 18 C46 12 20 28 19 56 C18 84 42 102 66 99 C90 96 104 74 101 50 C98 28 80 15 58 17 C52 18 47 20 44 23"/>
+    <!-- Eyes -->
+    <path d="M45 45 C45 49 46 52 47 53"/>
+    <path d="M73 43 C73 47 74 50 74 52"/>
+    <!-- Smile, with a second pass where the pen went over it -->
+    <path d="M38 67 C46 82 70 84 82 66"/>
+    <path d="M40 69 C49 80 68 81 80 68"/>
+  </g>
+</svg>

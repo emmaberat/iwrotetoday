@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- Cream paper with faint mottling and grain, like the app background -->
+    <filter id="paper" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="4" result="mottle"/>
+      <feColorMatrix in="mottle" values="0 0 0 0 0.45  0 0 0 0 0.38  0 0 0 0 0.25  0 0 0 0.22 -0.06" result="mottleTint"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="2" result="grain"/>
+      <feColorMatrix in="grain" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.35 -0.05" result="grainTint"/>
+      <feMerge><feMergeNode in="mottleTint"/><feMergeNode in="grainTint"/></feMerge>
+    </filter>
+    <!-- Slightly shaky hand, and ink that skips a little, like a ballpoint -->
+    <filter id="pen" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="wobble"/>
+      <feDisplacementMap in="SourceGraphic" in2="wobble" scale="14" xChannelSelector="R" yChannelSelector="G" result="line"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="1" seed="3" result="skip"/>
+      <feColorMatrix in="skip" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0.62" result="skipAlpha"/>
+      <feComposite in="line" in2="skipAlpha" operator="in"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="#F5F5F0"/>
+  <rect width="1024" height="1024" filter="url(#paper)"/>
+  <!-- Same doodle as in the app, scaled up and kept inside the central safe area phones don't crop -->
+  <g transform="translate(512 512) rotate(-8) scale(6) translate(-60 -58)"
+     fill="none" stroke="#24379A" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#pen)">
+    <path d="M70 18 C46 12 20 28 19 56 C18 84 42 102 66 99 C90 96 104 74 101 50 C98 28 80 15 58 17 C52 18 47 20 44 23"/>
+    <path d="M45 45 C45 49 46 52 47 53"/>
+    <path d="M73 43 C73 47 74 50 74 52"/>
+    <path d="M38 67 C46 82 70 84 82 66"/>
+    <path d="M40 69 C49 80 68 81 80 68"/>
+  </g>
+</svg>

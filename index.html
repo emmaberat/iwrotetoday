@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>I Wrote Today</title>
+    <meta name="theme-color" content="#F5F5F0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="I Wrote Today">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <style>
         * {
             margin: 0;
@@ -20,7 +28,60 @@
             flex-direction: column;
             min-height: 100vh;
             padding: 20px;
+            /* Keep content clear of the notch and home bar when installed */
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
             transition: opacity 0.5s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Paper texture over the background color */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.22;
+            background-image: url("images/paper.svg");
+        }
+
+        /* A single ink splotch, tucked into the bottom corner of the main screen
+           (it lives inside the welcome screen, so it hides with it) */
+        .ink-splotch {
+            position: fixed;
+            right: -50px;
+            bottom: -40px;
+            width: 260px;
+            height: 260px;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.4;
+            transform: rotate(-14deg);
+            background: url("images/ink.svg") center / contain no-repeat;
+        }
+
+        /* A little ballpoint doodle beside the ink splotch */
+        .doodle {
+            position: fixed;
+            bottom: max(24px, calc(env(safe-area-inset-bottom) + 8px));
+            right: 145px;
+            width: 46px;
+            height: 46px;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.75;
+            transform: rotate(12deg);
+            background: url("images/smiley.svg") center / contain no-repeat;
+        }
+
+        /* On the quote screen, tuck the doodle into the top corner (opposite the Back button)
+           and let it scroll away with the page, so it never sits on top of a quote */
+        body.on-quote-screen .doodle {
+            position: absolute;
+            top: max(20px, env(safe-area-inset-top));
+            bottom: auto;
+            right: 24px;
         }
 
         .welcome-screen {
@@ -72,6 +133,7 @@
 
         .results-screen {
             display: none;
+            padding-top: 4.5rem; /* keeps long celebration words clear of the Back button */
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -121,6 +183,7 @@
             line-height: 1.4;
             margin-bottom: 1rem;
             color: #2D4D32;
+            white-space: pre-line; /* keeps the line breaks in verse quotes */
         }
 
         .quote-attribution {
@@ -143,6 +206,43 @@
         .book-link:hover {
             background-color: #2D4D32;
             color: #F5F5F0;
+        }
+
+        /* Extra quote from a book about writing, shown only on milestone days */
+        .craft-container {
+            display: none;
+            max-width: 560px;
+            margin-bottom: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(45, 77, 50, 0.25);
+            /* The heading arrives first, on its own, after the novel quote has settled */
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+            animation-delay: 2.5s;
+        }
+
+        .craft-label {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: #2D4D32;
+            text-transform: lowercase;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ...and lingers for a moment before the quote follows */
+        .craft-body {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s forwards;
+            animation-delay: 5s;
+        }
+
+        .craft-text {
+            font-size: 1.25rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            color: #2D4D32;
+            white-space: pre-line;
         }
 
         .back-button {
@@ -168,35 +268,6 @@
 
         .back-button svg {
             margin-right: 0.5rem;
-        }
-
-        .quills-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 2rem;
-            opacity: 0;
-            animation: fadeIn 1s forwards;
-            animation-delay: 2s;
-        }
-
-        .quill {
-            width: 24px;
-            height: 40px;
-            transition: transform 0.3s ease;
-        }
-
-        .milestone-message {
-            position: fixed;
-            top: 20px;
-            left: 0;
-            right: 0;
-            color: #2D4D32;
-            font-size: 1.5rem;
-            text-align: center;
-            animation: fadeInOut 3s ease;
-            z-index: 20;
         }
 
         /* Word screen styles */
@@ -249,11 +320,226 @@
             20%, 80% { opacity: 1; transform: translateY(0); }
         }
 
-        footer {
+
+        .back-button {
+            top: max(20px, env(safe-area-inset-top));
+        }
+
+        /* Links under the check-in button */
+        .install-tip {
+            margin-top: 2.5rem;
+            max-width: 320px;
+            padding: 1rem 1.25rem;
+            border: 1px dashed rgba(45, 77, 50, 0.4);
+            border-radius: 8px;
             text-align: center;
+            font-size: 0.95rem;
+            color: #3D3D3D;
+            background: rgba(245, 245, 240, 0.85);
+        }
+
+        .install-tip[hidden] {
+            display: none;
+        }
+
+        .install-tip-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .install-tip .secondary-btn {
+            font-size: 1rem;
+            padding: 0.6rem 1.25rem;
+        }
+
+        .welcome-nav {
+            display: flex;
+            gap: 1.5rem;
             margin-top: 3rem;
+        }
+
+        .nav-link {
+            background: none;
+            border: none;
             color: #5A5A5A;
-            font-size: 0.9rem;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            text-transform: lowercase;
+            cursor: pointer;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #2D4D32;
+            background-color: rgba(45, 77, 50, 0.1);
+        }
+
+        /* History and reminder screens */
+        .history-screen,
+        .reminder-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            min-height: 80vh;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            padding-top: 4.5rem;
+        }
+
+        .screen-title {
+            font-size: 2rem;
+            font-weight: normal;
+            color: #2D4D32;
+            margin-bottom: 1.5rem;
+            text-transform: lowercase;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            color: #2D4D32;
+            line-height: 1.1;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #5A5A5A;
+            text-transform: lowercase;
+        }
+
+        .calendar {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: #2D4D32;
+            font-size: 1.2rem;
+        }
+
+        .month-btn {
+            background: none;
+            border: none;
+            color: #2D4D32;
+            font-family: 'Georgia', serif;
+            font-size: 1.4rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .month-btn:hover:not(:disabled) {
+            background-color: rgba(45, 77, 50, 0.1);
+        }
+
+        .month-btn:disabled {
+            opacity: 0.25;
+            cursor: default;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .weekday {
+            font-size: 0.75rem;
+            color: #888;
+            padding-bottom: 0.25rem;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 50%;
+            background: none;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            color: #3D3D3D;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        .day:hover:not(:disabled) {
+            background-color: rgba(45, 77, 50, 0.1);
+        }
+
+        .day.wrote {
+            background-color: #2D4D32;
+            color: #F0F4F0;
+        }
+
+        .day.today {
+            box-shadow: inset 0 0 0 2px #2D4D32;
+        }
+
+        .day:disabled {
+            color: #C8C8C0;
+            cursor: default;
+        }
+
+        .history-hint,
+        .reminder-note {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            font-style: italic;
+            color: #888;
+            max-width: 360px;
+        }
+
+        .reminder-text {
+            max-width: 360px;
+            color: #5A5A5A;
+            margin-bottom: 1.5rem;
+        }
+
+        .time-input {
+            font-family: 'Georgia', serif;
+            font-size: 1.6rem;
+            color: #2D4D32;
+            background: #FFFFFF;
+            border: 1px solid #D5D5CC;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .secondary-btn {
+            background: #2D4D32;
+            color: #F0F4F0;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Georgia', serif;
+            font-size: 1.1rem;
+            padding: 0.9rem 2rem;
+            text-transform: lowercase;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .secondary-btn:hover {
+            background: #26422A;
         }
 
         /* Responsive design */
@@ -271,15 +557,6 @@
                 font-size: 3rem;
             }
             
-            .quills-container {
-                gap: 10px;
-            }
-            
-            .quill {
-                width: 20px;
-                height: 35px;
-            }
-            
             .treasure-message {
                 font-size: 2rem;
             }
@@ -295,9 +572,81 @@
     </style>
 </head>
 <body>
+    <div class="doodle" aria-hidden="true"></div>
+
     <div class="welcome-screen" id="welcome-screen">
+        <div class="ink-splotch" aria-hidden="true"></div>
         <button class="checkin-btn" id="checkin-button">i wrote today</button>
         <a class="tomorrow-link" id="tomorrow-link">i didn't, but i will tomorrow!</a>
+        <nav class="welcome-nav">
+            <button class="nav-link" id="history-link">my writing days</button>
+            <button class="nav-link" id="reminder-link">daily reminder</button>
+        </nav>
+
+        <!-- Shown once, on phones, until the app is added to the home screen -->
+        <div class="install-tip" id="install-tip" hidden>
+            <p id="install-tip-text"></p>
+            <div class="install-tip-actions">
+                <button class="secondary-btn" id="install-button" hidden>add to home screen</button>
+                <button class="nav-link" id="install-dismiss">got it</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-screen" id="history-screen">
+        <button class="back-button" data-back>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2D4D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back
+        </button>
+
+        <h1 class="screen-title">my writing days</h1>
+
+        <div class="stats">
+            <div>
+                <div class="stat-number" id="stat-current">0</div>
+                <div class="stat-label">current streak</div>
+            </div>
+            <div>
+                <div class="stat-number" id="stat-longest">0</div>
+                <div class="stat-label">longest streak</div>
+            </div>
+            <div>
+                <div class="stat-number" id="stat-total">0</div>
+                <div class="stat-label">days written</div>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <button class="month-btn" id="prev-month" aria-label="Previous month">‹</button>
+                <span id="month-label"></span>
+                <button class="month-btn" id="next-month" aria-label="Next month">›</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+
+        <p class="history-hint">Forgot to check in? Tap a past day to mark it.</p>
+    </div>
+
+    <div class="reminder-screen" id="reminder-screen">
+        <button class="back-button" data-back>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#2D4D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back
+        </button>
+
+        <h1 class="screen-title">daily reminder</h1>
+
+        <p class="reminder-text">Pick a time and add a daily "did you write today?" reminder to your phone's calendar.</p>
+
+        <input type="time" class="time-input" id="reminder-time" value="20:00">
+
+        <button class="secondary-btn" id="add-reminder">add to my calendar</button>
+
+        <p class="reminder-note">The App Store version will send its own notifications. Until then, your calendar does the reminding.</p>
     </div>
 
     <div class="results-screen" id="results-screen">
@@ -315,8 +664,16 @@
             <div class="quote-attribution" id="quote-attribution"></div>
             <a class="book-link" id="book-link" target="_blank">Find this book at Bookshop.org</a>
         </div>
+
+        <div class="craft-container" id="craft-container">
+            <div class="craft-label" id="craft-label"></div>
+            <div class="craft-body">
+                <div class="craft-text" id="craft-text"></div>
+                <div class="quote-attribution" id="craft-attribution"></div>
+                <a class="book-link" id="craft-link" target="_blank">Find this book at Bookshop.org</a>
+            </div>
+        </div>
         
-        <div class="quills-container" id="quills-container"></div>
     </div>
 
     <div class="word-screen" id="word-screen">
@@ -336,14 +693,77 @@
         </div>
     </div>
 
-    <footer>
-        <p>Celebrate your writing journey, one day at a time</p>
-    </footer>
 
     <script>
         // User data
         let userStreak = 0;
-        let lastCheckIn = null;
+        let writingDays = new Set(); // dates written, as "YYYY-MM-DD"
+
+        // Local calendar date as "YYYY-MM-DD"
+        function dateKey(date) {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${date.getFullYear()}-${month}-${day}`;
+        }
+
+        function daysBefore(date, count) {
+            const result = new Date(date);
+            result.setDate(result.getDate() - count);
+            return result;
+        }
+
+        function loadWritingDays() {
+            const saved = localStorage.getItem('writingDays');
+            if (saved) {
+                writingDays = new Set(JSON.parse(saved));
+                return;
+            }
+
+            // Older versions only kept the streak and last check-in, so rebuild those days
+            const lastCheckIn = localStorage.getItem('lastCheckIn');
+            const oldStreak = parseInt(localStorage.getItem('userStreak'));
+            if (lastCheckIn && oldStreak > 0) {
+                const last = new Date(lastCheckIn);
+                for (let i = 0; i < oldStreak; i++) {
+                    writingDays.add(dateKey(daysBefore(last, i)));
+                }
+                saveWritingDays();
+            }
+        }
+
+        function saveWritingDays() {
+            localStorage.setItem('writingDays', JSON.stringify([...writingDays].sort()));
+        }
+
+        // Consecutive days ending today, or ending yesterday if today isn't logged yet
+        function currentStreak() {
+            let day = new Date();
+            if (!writingDays.has(dateKey(day))) {
+                day = daysBefore(day, 1);
+            }
+            let streak = 0;
+            while (writingDays.has(dateKey(day))) {
+                streak++;
+                day = daysBefore(day, 1);
+            }
+            return streak;
+        }
+
+        function longestStreak() {
+            let longest = 0;
+            for (const key of writingDays) {
+                const [year, month, day] = key.split('-').map(Number);
+                const start = new Date(year, month - 1, day);
+                // Only count from the first day of each run
+                if (writingDays.has(dateKey(daysBefore(start, 1)))) continue;
+                let length = 0;
+                while (writingDays.has(dateKey(daysBefore(start, -length)))) {
+                    length++;
+                }
+                longest = Math.max(longest, length);
+            }
+            return longest;
+        }
         
         // Celebration phrases
         const celebrations = [
@@ -359,20 +779,20 @@
                 text: "Zóra was a woman of principle, an open atheist. At the age of thirteen, a priest had told her that animals had no souls, and she had said, 'Well then, fuck you, Pops,' and walked out of church.",
                 author: "Téa Obreht",
                 book: "The Tiger's Wife",
-                year: 2010,
+                year: 2011,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780385343831"
+                    bookshop: "https://bookshop.org/book/9780385343831"
                 }
             },
             {
                 text: "Reality is frequently inaccurate.",
                 author: "Douglas Adams",
-                book: "The Hitchhiker's Guide to the Galaxy",
-                year: 1979,
+                book: "The Restaurant at the End of the Universe",
+                year: 1980,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780345391803"
+                    bookshop: "https://bookshop.org/book/9780345391810"
                 }
             },
             {
@@ -382,7 +802,7 @@
                 year: 1999,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780802137795"
+                    bookshop: "https://bookshop.org/book/9780802170262"
                 }
             },
             {
@@ -392,17 +812,17 @@
                 year: 1979,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780345391803"
+                    bookshop: "https://bookshop.org/book/9780345391803"
                 }
             },
             {
-                text: "The air was the color of television, tuned to a dead channel.",
+                text: "The sky above the port was the color of television, tuned to a dead channel.",
                 author: "William Gibson",
                 book: "Neuromancer",
                 year: 1984,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780441569595"
+                    bookshop: "https://bookshop.org/book/9780441569595"
                 }
             },
             {
@@ -412,7 +832,7 @@
                 year: 2013,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780307472274"
+                    bookshop: "https://bookshop.org/book/9780307472274"
                 }
             },
             {
@@ -422,17 +842,7 @@
                 year: 1952,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780141181269"
-                }
-            },
-            {
-                text: "We are an impossibility in an impossible universe.",
-                author: "Ray Bradbury",
-                book: "The Martian Chronicles",
-                year: 1950,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/a/123/9781451678192"
+                    bookshop: "https://bookshop.org/book/9781931520140"
                 }
             },
             {
@@ -442,17 +852,7 @@
                 year: 2019,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780143134334"
-                }
-            },
-            {
-                text: "Sometimes a scream is better than a thesis.",
-                author: "Ralph Waldo Emerson",
-                book: "Journals",
-                year: 1836,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/a/123/9780674604704"
+                    bookshop: "https://bookshop.org/book/9780802156983"
                 }
             },
             {
@@ -462,7 +862,7 @@
                 year: 2009,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780679722762"
+                    bookshop: "https://bookshop.org/book/9781439148952"
                 }
             },
             {
@@ -472,7 +872,7 @@
                 year: 1999,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780395927205"
+                    bookshop: "https://bookshop.org/book/9780395927205"
                 }
             },
             {
@@ -482,7 +882,7 @@
                 year: 1985,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780385490818"
+                    bookshop: "https://bookshop.org/book/9780385490818"
                 }
             },
             {
@@ -492,7 +892,7 @@
                 year: 1988,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780954702335"
+                    bookshop: "https://bookshop.org/book/9780954702335"
                 }
             },
             {
@@ -502,7 +902,7 @@
                 year: 2007,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780553448184"
+                    bookshop: "https://bookshop.org/book/9780553448184"
                 }
             },
             {
@@ -512,7 +912,7 @@
                 year: 1871,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780486408784"
+                    bookshop: "https://bookshop.org/book/9780486408781"
                 }
             },
             {
@@ -522,17 +922,17 @@
                 year: 1949,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780451524935"
+                    bookshop: "https://bookshop.org/book/9780451524935"
                 }
             },
             {
-                text: "The snow in the mountains was melting and Bunny had been dead for several weeks.",
+                text: "The snow in the mountains was melting and Bunny had been dead for several weeks before we came to understand the gravity of our situation.",
                 author: "Donna Tartt",
                 book: "The Secret History",
                 year: 1992,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9781400031702"
+                    bookshop: "https://bookshop.org/book/9781400031702"
                 }
             },
             {
@@ -542,7 +942,7 @@
                 year: 1813,
                 gender: "female",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780141439518"
+                    bookshop: "https://bookshop.org/book/9780141439518"
                 }
             },
             {
@@ -552,7 +952,92 @@
                 year: 1877,
                 gender: "male",
                 links: {
-                    bookshop: "https://bookshop.org/a/123/9780143035008"
+                    bookshop: "https://bookshop.org/book/9780143035008"
+                }
+            },
+            {
+                text: "Our father, the baron, was a dull man certainly, although not a bad one: dull because his life was dominated by thoughts that were out of step, as often happens in eras of transition.",
+                author: "Italo Calvino",
+                book: "The Baron in the Trees",
+                translator: "Ann Goldstein",
+                year: 1957,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780544959118"
+                }
+            },
+            {
+                text: "Sophia asked her grandmother what Heaven looked like, and Grandmother said it might be like the pasture they were just then walking by, on their way to the village over on the mainland. They stopped to look.",
+                author: "Tove Jansson",
+                book: "The Summer Book",
+                translator: "Thomas Teal",
+                year: 1972,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781590172681"
+                }
+            },
+            {
+                text: "When my hands are restless and I need to stim, I now imagine that they contain magic. That the twitchy feeling is just like fire trying to get out.",
+                author: "Elle McNicoll",
+                book: "A Kind of Spark",
+                year: 2020,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781913311056"
+                }
+            },
+            {
+                // Verse: each \n is a line break from the book
+                text: "While Vondie and JB\ndebate whether the new girl\nis a knockout or just beautiful,\na hottie or a cutie,\na lay-up or a dunk,\nI finish my vocabulary homework—\nand my brother's vocabulary homework,\nwhich I don't mind\nsince English is my favorite subject\nand he did the dishes for me last week.",
+                author: "Kwame Alexander",
+                book: "The Crossover",
+                year: 2014,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780544107717"
+                }
+            },
+            {
+                text: "I think I've been able to run for more than twenty years for a simple reason: It suits me. Or at least because I don't find it all that painful.",
+                author: "Haruki Murakami",
+                book: "What I Talk About When I Talk About Running",
+                translator: "Philip Gabriel",
+                year: 2007,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780307389831"
+                }
+            },
+            {
+                text: "'Say something!' she demanded, threatening to tear out our tongues. Little did she know that one of us was holding her tongue in her hand.",
+                author: "Itamar Vieira Junior",
+                book: "Crooked Plow",
+                translator: "Johnny Lorenz",
+                year: 2019,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781839766404"
+                }
+            },
+            {
+                text: "In the Hardenbergs' house there was an angel, August Wilhelm Bernhard, fair as wheat. After plain motherly Charlotte, the eldest, pale, wide-eyed Fritz, stumpy little Erasmus, easy-going Karl, open-hearted Sidonie, painstaking Anton, came the blonde Bernhard.",
+                author: "Penelope Fitzgerald",
+                book: "The Blue Flower",
+                year: 1995,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780395859971"
+                }
+            },
+            {
+                text: "Then, beyond her face reflected back to her, deeper within the pool, she saw a cluster of oysters bunched white in the shadow. It was almost too much to imagine putting her arm back into the cold, but she did, swearing.",
+                author: "Lauren Groff",
+                book: "The Vaster Wilds",
+                year: 2023,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780593418390"
                 }
             }
         ];
@@ -561,143 +1046,179 @@
         const unusualWords = [
             {
                 word: "Petrichor",
-                definition: "A pleasant, earthy smell that accompanies the first rain after a dry period.",
-                source: "Oxford English Dictionary"
+                definition: "A distinctive, earthy, usually pleasant odor that is associated with rainfall especially when following a warm, dry period and that arises from a combination of volatile plant oils and geosmin released from the soil into the air and by ozone carried by downdrafts.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Catawampus",
                 definition: "Askew; awry.",
-                source: "Merriam-Webster Dictionary"
-            },
-            {
-                word: "Ephemeral",
-                definition: "Lasting for a very short time.",
-                source: "Oxford English Dictionary"
+                source: "Merriam-Webster"
             },
             {
                 word: "Defenestration",
-                definition: "The act of throwing someone or something out of a window.",
-                source: "Merriam-Webster Dictionary"
+                definition: "A throwing of a person or thing out of a window.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Octothorpe",
                 definition: "The symbol #.",
-                source: "Merriam-Webster Dictionary"
+                source: "Merriam-Webster"
             },
             {
                 word: "Biblioklept",
                 definition: "One who steals books.",
-                source: "Merriam-Webster Dictionary"
+                source: "Merriam-Webster"
             },
             {
                 word: "Ineffable",
-                definition: "Too great or extreme to be expressed or described in words.",
-                source: "Oxford English Dictionary"
+                definition: "Incapable of being expressed in words; indescribable.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Resplendent",
-                definition: "Attractive and impressive through being richly colorful or sumptuous.",
-                source: "Oxford English Dictionary"
+                definition: "Shining brilliantly; characterized by a glowing splendor.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Dibble",
                 definition: "A small hand implement used to make holes in the ground for plants, seeds, or bulbs.",
-                source: "Merriam-Webster Dictionary"
-            },
-            {
-                word: "Quintessential",
-                definition: "Representing the most perfect or typical example of a quality or class.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Nebulous",
-                definition: "In the form of a cloud or haze; hazy.",
-                source: "Oxford English Dictionary"
+                source: "Merriam-Webster"
             },
             {
                 word: "Halcyon",
-                definition: "Denoting a period of time in the past that was idyllically happy and peaceful.",
-                source: "Oxford English Dictionary"
+                definition: "Characterized by happiness, great success, and prosperity; golden. Often used to describe an idyllic time in the past that is remembered as better than today.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Evanescent",
-                definition: "Soon passing out of sight, memory, or existence; quickly fading or disappearing.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Surreptitious",
-                definition: "Kept secret, especially because it would not be approved of.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Incandescent",
-                definition: "Emitting light as a result of being heated.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Mellifluous",
-                definition: "Sweet or musical; pleasant to hear.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Vicarious",
-                definition: "Experienced in the imagination through the feelings or actions of another person.",
-                source: "Oxford English Dictionary"
+                definition: "Tending to vanish like vapor.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Penumbra",
-                definition: "The partially shaded outer region of the shadow cast by an opaque object.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Epiphany",
-                definition: "A moment of sudden and great revelation or realization.",
-                source: "Oxford English Dictionary"
+                definition: "A space of partial illumination (as in an eclipse) between the perfect shadow on all sides and the full light.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Borborygmus",
-                definition: "A rumbling or gurgling noise made by the movement of fluid and gas in the intestines.",
-                source: "Merriam-Webster Dictionary"
+                definition: "Intestinal rumbling caused by moving gas.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Aureate",
-                definition: "Denoting, made of, or having the color of gold.",
-                source: "Oxford English Dictionary"
+                definition: "Of a golden color or brilliance.",
+                source: "Merriam-Webster"
             },
             {
-                word: "Sonorous",
-                definition: "Capable of producing a deep or ringing sound.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Sibilance",
-                definition: "A hissing sound; the quality of being sibilant.",
-                source: "Cambridge English Dictionary"
-            },
-            {
-                word: "Apricity",
-                definition: "The warmth of the sun in winter.",
-                source: "Oxford English Dictionary"
-            },
-            {
-                word: "Ethereal",
-                definition: "Extremely delicate and light in a way that seems too perfect for this world.",
-                source: "Oxford English Dictionary"
+                word: "Sibilant",
+                definition: "Having, containing, or producing the sound of or a sound resembling that of the s or the sh in sash.",
+                source: "Merriam-Webster"
             },
             {
                 word: "Nepenthe",
                 definition: "A potion used by the ancients to induce forgetfulness of pain or sorrow.",
-                source: "Merriam-Webster Dictionary"
+                source: "Merriam-Webster"
             },
             {
                 word: "Susurrus",
-                definition: "A soft, low noise like someone whispering.",
-                source: "Cambridge Dictionary"
+                definition: "A whispering or rustling sound.",
+                source: "Merriam-Webster"
             },
             {
-                word: "Absquatulate",
-                definition: "To leave suddenly (mainly humorous).",
-                source: "Cambridge English Dictionary"
+                word: "Grok",
+                definition: "To understand profoundly and intuitively.",
+                source: "Merriam-Webster"
+            },
+            {
+                word: "Lagniappe",
+                definition: "A small gift given to a customer by a merchant at the time of a purchase.",
+                source: "Merriam-Webster"
+            },
+            {
+                word: "Abactor",
+                definition: "One who steals cattle.",
+                source: "Merriam-Webster"
+            },
+            {
+                word: "Euge",
+                definition: "An act or expression of approval.",
+                source: "Merriam-Webster"
+            },
+            {
+                word: "Lulliloo",
+                definition: "To shout joyously in the manner of various African peoples.",
+                source: "Merriam-Webster"
+            },
+            {
+                word: "Carriwitchet",
+                definition: "A hoaxing or riddling question.",
+                source: "Merriam-Webster"
+            }
+        ];
+
+        // Quotes from books about writing, one per milestone, in the same order as MILESTONES
+        // (3, 7, 14, 30, 60, 180 days). If there are fewer quotes than milestones, they repeat.
+        const craftQuotes = [
+            {
+                text: "I want to put a group of characters (perhaps a pair; perhaps even just one) in some sort of predicament and then watch them try to work themselves free.",
+                author: "Stephen King",
+                book: "On Writing: A Memoir of the Craft",
+                year: 2000,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781439156810"
+                }
+            },
+            {
+                text: "Once you try your hand at it, you soon find that [writing] isn't as peaceful a job as it seems. The whole process—sitting at your desk, focusing your mind like a laser beam, imagining something out of a blank horizon, creating a story, selecting the right words, one by one, keeping the whole flow of the story on track—requires far more energy, over a long period, than most people ever imagine. You might not move your body around, but there's a grueling, dynamic labor going on inside you.",
+                author: "Haruki Murakami",
+                book: "What I Talk About When I Talk About Running: A Memoir",
+                translator: "Philip Gabriel",
+                year: 2007,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780307389831"
+                }
+            },
+            {
+                text: "We always worry that we are copying someone else, that we don't have our own style. Don't worry. Writing is a communal act. Contrary to popular belief, a writer is not Prometheus alone on a hill full of fire.",
+                author: "Natalie Goldberg",
+                book: "Writing Down the Bones: Freeing the Writer Within",
+                year: 1986,
+                gender: "female",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781611803082"
+                }
+            },
+            {
+                text: "You and your younger brother are competing for leadership of the Labour Party; you are far more experienced and everyone expects you to win. How do you feel if you lose? What do you say to him?\n\nThe conflict between how we wish to be perceived and what we really feel is at the root of all character.",
+                author: "John Yorke",
+                book: "Into the Woods: How Stories Work and Why We Tell Them",
+                year: 2013,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781468310948"
+                }
+            },
+            {
+                text: "A pro views her work as craft, not art. Not because she believes art is devoid of a mystical dimension. On the contrary. She understands that all creative endeavor is holy, but she doesn't dwell on it. She knows if she thinks about that too much, it will paralyze her.",
+                author: "Steven Pressfield",
+                book: "The War of Art: Break Through the Blocks and Win Your Inner Creative Battles",
+                year: 2002,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9781936891023"
+                }
+            },
+            {
+                text: "Research must not become procrastination…Research is meat to feed the beasts of imagination and invention, never an end in itself.",
+                author: "Robert McKee",
+                book: "Story: Substance, Structure, Style, and the Principles of Screenwriting",
+                year: 1997,
+                gender: "male",
+                links: {
+                    bookshop: "https://bookshop.org/book/9780060391683"
+                }
             }
         ];
 
@@ -717,59 +1238,64 @@
         const quoteText = document.getElementById('quote-text');
         const quoteAttribution = document.getElementById('quote-attribution');
         const bookLink = document.getElementById('book-link');
-        const quillsContainer = document.getElementById('quills-container');
+        const craftContainer = document.getElementById('craft-container');
+        const craftLabel = document.getElementById('craft-label');
+        const craftText = document.getElementById('craft-text');
+        const craftAttribution = document.getElementById('craft-attribution');
+        const craftLink = document.getElementById('craft-link');
         const treasureMessage = document.getElementById('treasure-message');
         const wordContainer = document.getElementById('word-container');
         const wordDisplay = document.getElementById('word-display');
         const wordDefinition = document.getElementById('word-definition');
         const wordSource = document.getElementById('word-source');
+        const historyScreen = document.getElementById('history-screen');
+        const reminderScreen = document.getElementById('reminder-screen');
+        const historyLink = document.getElementById('history-link');
+        const reminderLink = document.getElementById('reminder-link');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const monthLabel = document.getElementById('month-label');
+        const prevMonthButton = document.getElementById('prev-month');
+        const nextMonthButton = document.getElementById('next-month');
+        const reminderTime = document.getElementById('reminder-time');
+        const addReminderButton = document.getElementById('add-reminder');
 
         // Initialize the app
         function initApp() {
-            // Load user streak
-            if (localStorage.getItem('userStreak')) {
-                userStreak = parseInt(localStorage.getItem('userStreak'));
-            }
-            
+            // Load writing history
+            loadWritingDays();
+            userStreak = currentStreak();
+
             // Always show welcome screen first
             welcomeScreen.style.display = 'flex';
             resultsScreen.style.display = 'none';
             wordScreen.style.display = 'none';
+            historyScreen.style.display = 'none';
+            reminderScreen.style.display = 'none';
         }
 
         // Handle check-in
         checkinButton.addEventListener('click', function() {
-            const today = new Date();
-            const todayString = today.toDateString();
-            
+            const todayKey = dateKey(new Date());
+            window.scrollTo(0, 0); // the quote screen can be taller than the screen; always start at the top
+            document.body.classList.add('on-quote-screen');
+
             // Check if already checked in today
-            if (localStorage.getItem('lastCheckIn') === todayString) {
+            if (writingDays.has(todayKey)) {
                 // User already checked in today - show results without updating streak
+                userStreak = currentStreak();
                 welcomeScreen.style.display = 'none';
                 resultsScreen.style.display = 'flex';
                 showCelebration();
                 setTimeout(showQuote, 1000);
-                setTimeout(showQuills, 2000);
+                showCraftQuote();
                 return;
             }
-            
-            // Check if streak continues (wrote yesterday)
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayString = yesterday.toDateString();
-            
-            if (localStorage.getItem('lastCheckIn') !== yesterdayString) {
-                // Streak broken
-                userStreak = 1;
-            } else {
-                // Continue streak
-                userStreak++;
-            }
-            
-            // Save check-in and streak
-            localStorage.setItem('lastCheckIn', todayString);
-            localStorage.setItem('userStreak', userStreak);
-            
+
+            // Save today's check-in
+            writingDays.add(todayKey);
+            saveWritingDays();
+            userStreak = currentStreak();
+
             // Switch to results screen
             welcomeScreen.style.display = 'none';
             resultsScreen.style.display = 'flex';
@@ -777,14 +1303,7 @@
             // Show celebration and then quote
             showCelebration();
             setTimeout(showQuote, 1000);
-            setTimeout(showQuills, 2000);
-            
-            // Check for milestone
-            if (MILESTONES.includes(userStreak)) {
-                setTimeout(() => {
-                    showMilestoneMessage();
-                }, 1000);
-            }
+            showCraftQuote();
         });
 
         // Handle "I'll write tomorrow" link
@@ -801,7 +1320,9 @@
         backButton.addEventListener('click', function() {
             resultsScreen.style.display = 'none';
             welcomeScreen.style.display = 'flex';
-            
+            craftContainer.style.display = 'none';
+            document.body.classList.remove('on-quote-screen');
+
             // Reset celebration and quote for next time
             celebrationElement.style.animation = 'none';
             quoteContainer.style.animation = 'none';
@@ -809,9 +1330,6 @@
                 celebrationElement.style.animation = '';
                 quoteContainer.style.animation = '';
             }, 10);
-            
-            // Clear quills
-            quillsContainer.innerHTML = '';
         });
 
         // Handle back button from word screen
@@ -842,10 +1360,31 @@
             const quoteData = novelQuotes[dayOfYear % novelQuotes.length];
             
             quoteText.textContent = `"${quoteData.text}"`;
-            quoteAttribution.textContent = `${quoteData.book}, ${quoteData.author}`;
-            
+            quoteAttribution.textContent = formatAttribution(quoteData);
+
             // Set book link to Bookshop.org
             bookLink.href = quoteData.links.bookshop;
+        }
+
+        // "Book, Author" plus ", trans. Name" for translated books
+        function formatAttribution(quoteData) {
+            return `${quoteData.book}, ${quoteData.author}` +
+                (quoteData.translator ? `, trans. ${quoteData.translator}` : '');
+        }
+
+        // On milestone days, add a quote from a book about writing below the novel quote
+        function showCraftQuote() {
+            const milestone = MILESTONES.indexOf(userStreak);
+            if (milestone === -1) {
+                craftContainer.style.display = 'none';
+                return;
+            }
+            const craft = craftQuotes[milestone % craftQuotes.length];
+            craftLabel.textContent = `you've written for ${userStreak} days! here's some writing wisdom for your journey`;
+            craftText.textContent = `"${craft.text}"`;
+            craftAttribution.textContent = formatAttribution(craft);
+            craftLink.href = craft.links.bookshop;
+            craftContainer.style.display = 'block';
         }
 
         // Show word and definition
@@ -865,47 +1404,188 @@
             }, 1500);
         }
 
-        // Show quills based on streak
-        function showQuills() {
-            quillsContainer.innerHTML = '';
-            
-            for (let i = 0; i < userStreak; i++) {
-                const quill = document.createElement('div');
-                quill.className = 'quill';
-                
-                // Quill SVG
-                quill.innerHTML = `
-                    <svg width="100%" height="100%" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 38C6 34 8 28 12 22C16 16 18 12 12 6C6 0 8 6 12 12C16 18 20 24 16 30C12 36 10 38 2 38Z" fill="#2D4D32"/>
-                        <path d="M12 6C12 2 16 0 20 2C24 4 22 8 18 10C14 12 12 10 12 6Z" fill="#8B4513"/>
-                        <path d="M2 38L4 36" stroke="#5A5A5A" stroke-width="1.5"/>
-                    </svg>
-                `;
-                
-                quillsContainer.appendChild(quill);
+        // Writing history screen
+        let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+        historyLink.addEventListener('click', function() {
+            const today = new Date();
+            calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            welcomeScreen.style.display = 'none';
+            historyScreen.style.display = 'flex';
+            renderHistory();
+        });
+
+        prevMonthButton.addEventListener('click', function() {
+            calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+            renderHistory();
+        });
+
+        nextMonthButton.addEventListener('click', function() {
+            calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+            renderHistory();
+        });
+
+        function renderHistory() {
+            userStreak = currentStreak();
+            document.getElementById('stat-current').textContent = userStreak;
+            document.getElementById('stat-longest').textContent = longestStreak();
+            document.getElementById('stat-total').textContent = writingDays.size;
+
+            const today = new Date();
+            const todayKey = dateKey(today);
+            const year = calendarMonth.getFullYear();
+            const month = calendarMonth.getMonth();
+
+            monthLabel.textContent = calendarMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+            nextMonthButton.disabled = year === today.getFullYear() && month === today.getMonth();
+
+            calendarGrid.innerHTML = '';
+            ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(letter => {
+                const label = document.createElement('div');
+                label.className = 'weekday';
+                label.textContent = letter;
+                calendarGrid.appendChild(label);
+            });
+
+            // Blank cells before the 1st so it lands on the right weekday
+            for (let i = 0; i < new Date(year, month, 1).getDay(); i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const key = dateKey(date);
+                const cell = document.createElement('button');
+                cell.className = 'day';
+                cell.textContent = day;
+                if (writingDays.has(key)) cell.classList.add('wrote');
+                if (key === todayKey) cell.classList.add('today');
+                if (date > today) {
+                    cell.disabled = true;
+                } else {
+                    cell.addEventListener('click', () => toggleWritingDay(key));
+                }
+                calendarGrid.appendChild(cell);
             }
         }
 
-        // Show milestone message
-        function showMilestoneMessage() {
-            const messages = {
-                3: "First milestone!",
-                7: "Weekly streak!",
-                14: "Two weeks strong!",
-                30: "Month of writing!",
-                60: "Two months!",
-                180: "Half a year!"
-            };
-            
-            const msg = document.createElement('div');
-            msg.className = 'milestone-message';
-            msg.textContent = messages[userStreak];
-            
-            document.body.appendChild(msg);
-            
-            setTimeout(() => {
-                msg.remove();
-            }, 3000);
+        function toggleWritingDay(key) {
+            if (writingDays.has(key)) {
+                writingDays.delete(key);
+            } else {
+                writingDays.add(key);
+            }
+            saveWritingDays();
+            renderHistory();
+        }
+
+        // Daily reminder screen
+        reminderTime.value = localStorage.getItem('reminderTime') || '20:00';
+
+        reminderLink.addEventListener('click', function() {
+            welcomeScreen.style.display = 'none';
+            reminderScreen.style.display = 'flex';
+        });
+
+        reminderTime.addEventListener('change', function() {
+            localStorage.setItem('reminderTime', reminderTime.value);
+        });
+
+        // Download a repeating calendar event; the phone's calendar app handles the alert
+        addReminderButton.addEventListener('click', function() {
+            const [hours, minutes] = (reminderTime.value || '20:00').split(':');
+            const start = dateKey(new Date()).replace(/-/g, '') + `T${hours}${minutes}00`;
+            const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            const ics = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//I Wrote Today//Daily Reminder//EN',
+                'BEGIN:VEVENT',
+                `UID:daily-reminder-${stamp}@iwrotetoday`,
+                `DTSTAMP:${stamp}`,
+                `DTSTART:${start}`,
+                'DURATION:PT5M',
+                'RRULE:FREQ=DAILY',
+                'SUMMARY:Did you write today?',
+                'DESCRIPTION:Open I Wrote Today and check in.',
+                'BEGIN:VALARM',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Did you write today?',
+                'TRIGGER:PT0M',
+                'END:VALARM',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\r\n');
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+            link.download = 'i-wrote-today-reminder.ics';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        });
+
+        // Back buttons on the history and reminder screens
+        document.querySelectorAll('[data-back]').forEach(button => {
+            button.addEventListener('click', function() {
+                button.parentElement.style.display = 'none';
+                welcomeScreen.style.display = 'flex';
+            });
+        });
+
+        // "Add to home screen" tip: phones only, not once installed, and not after "got it"
+        const installTip = document.getElementById('install-tip');
+        const installTipText = document.getElementById('install-tip-text');
+        const installButton = document.getElementById('install-button');
+        let installPrompt = null;
+
+        function setupInstallTip() {
+            const isAndroid = /Android/.test(navigator.userAgent);
+            const isIOS = !isAndroid && (/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)); // iPads report as Macs
+            const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            let dismissed = false;
+            try { dismissed = localStorage.getItem('installTipDismissed') === 'yes'; } catch (e) {}
+
+            if (installed || dismissed || !(isIOS || isAndroid)) return;
+
+            installTipText.textContent = isIOS
+                ? 'Keep I Wrote Today on your phone: tap the Share button, then "Add to Home Screen".'
+                : 'Keep I Wrote Today on your phone: open the browser menu (⋮), then "Install app" or "Add to Home screen".';
+            installTip.hidden = false;
+        }
+
+        // Android Chrome can install directly; swap the instructions for a button when it offers to
+        window.addEventListener('beforeinstallprompt', function(event) {
+            event.preventDefault();
+            installPrompt = event;
+            installTipText.textContent = 'Keep I Wrote Today on your phone, like an app.';
+            installButton.hidden = false;
+        });
+
+        installButton.addEventListener('click', async function() {
+            if (!installPrompt) return;
+            installPrompt.prompt();
+            await installPrompt.userChoice;
+            installPrompt = null;
+            installTip.hidden = true;
+        });
+
+        document.getElementById('install-dismiss').addEventListener('click', function() {
+            installTip.hidden = true;
+            try { localStorage.setItem('installTipDismissed', 'yes'); } catch (e) {}
+        });
+
+        window.addEventListener('appinstalled', function() {
+            installTip.hidden = true;
+        });
+
+        setupInstallTip();
+
+        // Offline support once the app is hosted (service workers don't run from a local file)
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            navigator.serviceWorker.register('sw.js');
         }
 
         // Initialize the app
