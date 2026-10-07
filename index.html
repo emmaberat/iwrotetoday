@@ -342,6 +342,20 @@
             display: none;
         }
 
+        .intro-install-tip {
+            margin: 0 auto 1.75rem;
+            font-size: 0.9rem;
+        }
+
+        .intro-install-tip p {
+            margin-bottom: 0;
+        }
+
+        /* On the welcome screen there's no "got it"; only show the row when it holds the install button */
+        .intro-install-tip .install-tip-actions:not(:has(.install-button:not([hidden]))) {
+            display: none;
+        }
+
         .install-tip-actions {
             display: flex;
             justify-content: center;
@@ -642,9 +656,9 @@
 
         <!-- Shown once, on phones, until the app is added to the home screen -->
         <div class="install-tip" id="install-tip" hidden>
-            <p id="install-tip-text"></p>
+            <p class="install-tip-text"></p>
             <div class="install-tip-actions">
-                <button class="secondary-btn" id="install-button" hidden>add to home screen</button>
+                <button class="secondary-btn install-button" hidden>add to home screen</button>
                 <button class="nav-link" id="install-dismiss">got it</button>
             </div>
         </div>
@@ -660,6 +674,14 @@
         <p>After checking in for 3, 7, 14, 30, 60 and 180 days, you'll also receive some writing wisdom from authors who've walked the road.</p>
 
         <p class="intro-note">Everything stays private, on your own phone.</p>
+
+        <!-- Same add-to-home-screen tip as on the main screen, so first-time visitors see it straight away -->
+        <div class="install-tip intro-install-tip" hidden>
+            <p class="install-tip-text"></p>
+            <div class="install-tip-actions">
+                <button class="secondary-btn install-button" hidden>add to home screen</button>
+            </div>
+        </div>
 
         <button class="secondary-btn" id="intro-start">let's begin</button>
     </div>
@@ -1625,11 +1647,18 @@
             });
         });
 
-        // "Add to home screen" tip: phones only, not once installed, and not after "got it"
-        const installTip = document.getElementById('install-tip');
-        const installTipText = document.getElementById('install-tip-text');
-        const installButton = document.getElementById('install-button');
+        // "Add to home screen" tip, on the welcome screen and the main screen:
+        // phones only, not once installed, and not after "got it"
+        const installTips = document.querySelectorAll('.install-tip');
         let installPrompt = null;
+
+        function setInstallText(text) {
+            installTips.forEach(tip => { tip.querySelector('.install-tip-text').textContent = text; });
+        }
+
+        function hideInstallTips() {
+            installTips.forEach(tip => { tip.hidden = true; });
+        }
 
         function setupInstallTip() {
             const isAndroid = /Android/.test(navigator.userAgent);
@@ -1641,36 +1670,36 @@
 
             if (installed || dismissed || !(isIOS || isAndroid)) return;
 
-            installTipText.textContent = isIOS
+            setInstallText(isIOS
                 ? 'Keep I Wrote Today on your phone: tap the Share button, then "Add to Home Screen".'
-                : 'Keep I Wrote Today on your phone: open the browser menu (⋮), then "Install app" or "Add to Home screen".';
-            installTip.hidden = false;
+                : 'Keep I Wrote Today on your phone: open the browser menu (⋮), then "Install app" or "Add to Home screen".');
+            installTips.forEach(tip => { tip.hidden = false; });
         }
 
         // Android Chrome can install directly; swap the instructions for a button when it offers to
         window.addEventListener('beforeinstallprompt', function(event) {
             event.preventDefault();
             installPrompt = event;
-            installTipText.textContent = 'Keep I Wrote Today on your phone, like an app.';
-            installButton.hidden = false;
+            setInstallText('Keep I Wrote Today on your phone, like an app.');
+            document.querySelectorAll('.install-button').forEach(button => { button.hidden = false; });
         });
 
-        installButton.addEventListener('click', async function() {
-            if (!installPrompt) return;
-            installPrompt.prompt();
-            await installPrompt.userChoice;
-            installPrompt = null;
-            installTip.hidden = true;
+        document.querySelectorAll('.install-button').forEach(button => {
+            button.addEventListener('click', async function() {
+                if (!installPrompt) return;
+                installPrompt.prompt();
+                await installPrompt.userChoice;
+                installPrompt = null;
+                hideInstallTips();
+            });
         });
 
         document.getElementById('install-dismiss').addEventListener('click', function() {
-            installTip.hidden = true;
+            hideInstallTips();
             try { localStorage.setItem('installTipDismissed', 'yes'); } catch (e) {}
         });
 
-        window.addEventListener('appinstalled', function() {
-            installTip.hidden = true;
-        });
+        window.addEventListener('appinstalled', hideInstallTips);
 
         setupInstallTip();
 
