@@ -380,6 +380,51 @@
         }
 
         /* History and reminder screens */
+        /* First-visit introduction (also reachable from "how it works") */
+        .intro-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            text-align: center;
+            animation: fadeIn 0.8s ease;
+        }
+
+        /* Screen titles are lowercase; the app's name stays in capitals here */
+        .intro-screen .app-name {
+            text-transform: none;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        .intro-screen p {
+            margin-bottom: 1rem;
+            color: #3D3D3D;
+        }
+
+        .intro-screen strong {
+            font-weight: normal;
+            font-style: italic;
+            color: #2D4D32;
+        }
+
+        .intro-screen .intro-lead {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: #2D4D32;
+            margin-bottom: 1.5rem;
+        }
+
+        .intro-screen .intro-note {
+            font-size: 0.9rem;
+            color: #5A5A5A;
+            margin: 0.5rem 0 1.75rem;
+        }
+
         .history-screen,
         .reminder-screen {
             display: none;
@@ -544,6 +589,17 @@
 
         /* Responsive design */
         @media (max-width: 768px) {
+            /* Keep the three links under the button on one line each */
+            .welcome-nav {
+                gap: 0.25rem;
+            }
+
+            .nav-link {
+                white-space: nowrap;
+                font-size: 0.9rem;
+                padding: 0.5rem 0.5rem;
+            }
+
             .checkin-btn {
                 font-size: 1.5rem;
                 padding: 1.5rem 3rem;
@@ -581,6 +637,7 @@
         <nav class="welcome-nav">
             <button class="nav-link" id="history-link">my writing days</button>
             <button class="nav-link" id="reminder-link">daily reminder</button>
+            <button class="nav-link" id="intro-link">how it works</button>
         </nav>
 
         <!-- Shown once, on phones, until the app is added to the home screen -->
@@ -591,6 +648,20 @@
                 <button class="nav-link" id="install-dismiss">got it</button>
             </div>
         </div>
+    </div>
+
+    <div class="intro-screen" id="intro-screen">
+        <h1 class="screen-title">welcome to <span class="app-name">I WROTE TODAY</span></h1>
+
+        <p class="intro-lead">A small companion for your writing journey.</p>
+
+        <p>Every day you write (or mean to), tap <strong>i wrote today</strong> (or <strong>i didn't, but i will tomorrow!</strong>) for a little word reward (a wordward, a re-word?).</p>
+
+        <p>After checking in for 3, 7, 14, 30, 60 and 180 days, you'll also receive some writing wisdom from authors who've walked the road.</p>
+
+        <p class="intro-note">Everything stays private, on your own phone.</p>
+
+        <button class="secondary-btn" id="intro-start">let's begin</button>
     </div>
 
     <div class="history-screen" id="history-screen">
@@ -1265,13 +1336,33 @@
             loadWritingDays();
             userStreak = currentStreak();
 
-            // Always show welcome screen first
-            welcomeScreen.style.display = 'flex';
+            // Show the main screen, or the introduction on someone's very first visit
+            let introSeen = true;
+            try { introSeen = localStorage.getItem('introSeen') === 'yes'; } catch (e) {}
+            if (writingDays.size > 0) introSeen = true; // people already using the app don't need it
+            welcomeScreen.style.display = introSeen ? 'flex' : 'none';
+            introScreen.style.display = introSeen ? 'none' : 'flex';
             resultsScreen.style.display = 'none';
             wordScreen.style.display = 'none';
             historyScreen.style.display = 'none';
             reminderScreen.style.display = 'none';
         }
+
+        // Introduction screen
+        const introScreen = document.getElementById('intro-screen');
+
+        document.getElementById('intro-start').addEventListener('click', function() {
+            try { localStorage.setItem('introSeen', 'yes'); } catch (e) {}
+            introScreen.style.display = 'none';
+            welcomeScreen.style.display = 'flex';
+            window.scrollTo(0, 0);
+        });
+
+        document.getElementById('intro-link').addEventListener('click', function() {
+            welcomeScreen.style.display = 'none';
+            introScreen.style.display = 'flex';
+            window.scrollTo(0, 0);
+        });
 
         // Handle check-in
         checkinButton.addEventListener('click', function() {
