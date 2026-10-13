@@ -84,6 +84,11 @@
             right: 24px;
         }
 
+        /* Hidden on any screen where text or a button would cover it (see updateDoodle) */
+        .doodle.doodle-covered {
+            visibility: hidden;
+        }
+
         .welcome-screen {
             display: flex;
             flex-direction: column;
@@ -1746,8 +1751,88 @@
             navigator.serviceWorker.register('sw.js');
         }
 
+        // The smiley doodle sits behind the page. If any text, button or card on the current screen
+        // would cover it, at any scroll position, it is left out of that screen instead.
+        const doodleElement = document.querySelector('.doodle');
+        const DOODLE_MARGIN = 6;
+
+        function contentRects() {
+            const rects = [];
+            const ignore = 'script, style, .doodle, .ink-splotch, .celebration';
+
+            // Every visible line of text
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                const el = node.parentElement;
+                if (!node.nodeValue.trim() || !el || el.closest(ignore)) continue;
+                if (getComputedStyle(el).visibility === 'hidden') continue;
+                const range = document.createRange();
+                range.selectNodeContents(node);
+                for (const r of range.getClientRects()) {
+                    if (r.width && r.height) rects.push(r);
+                }
+            }
+
+            // Buttons, links, calendar days and other boxes with a background or border
+            const viewportArea = window.innerWidth * window.innerHeight;
+            document.body.querySelectorAll('*').forEach(el => {
+                if (el.closest(ignore)) return;
+                const cs = getComputedStyle(el);
+                if (cs.visibility === 'hidden' || cs.display === 'none') return;
+                const alpha = (cs.backgroundColor.match(/rgba?\(([^)]*)\)/) || [])[1];
+                const parts = alpha ? alpha.split(',').map(Number) : [];
+                const hasBackground = parts.length > 0 && (parts.length < 4 || parts[3] > 0.05);
+                const hasBorder = parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== 'none';
+                const isControl = /^(BUTTON|INPUT|SELECT|TEXTAREA|SVG|IMG|CANVAS)$/i.test(el.tagName);
+                if (!hasBackground && !hasBorder && !isControl) return;
+                const r = el.getBoundingClientRect();
+                if (!r.width || !r.height || r.width * r.height > viewportArea * 0.6) return;
+                rects.push(r);
+            });
+            return rects;
+        }
+
+        function updateDoodle() {
+            const d = doodleElement.getBoundingClientRect();
+            if (!d.width) return;
+            const box = {
+                left: d.left - DOODLE_MARGIN, right: d.right + DOODLE_MARGIN,
+                top: d.top - DOODLE_MARGIN, bottom: d.bottom + DOODLE_MARGIN
+            };
+            const isFixed = getComputedStyle(doodleElement).position === 'fixed';
+            const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+            const covered = contentRects().some(r => {
+                if (r.right <= box.left || r.left >= box.right) return false;
+                if (!isFixed) return r.bottom > box.top && r.top < box.bottom;
+                // A fixed doodle stays put while the page scrolls under it: could this pass through it?
+                // It overlaps at scroll position s when top - bottom_of_doodle < s < bottom - top_of_doodle,
+                // and s can be anything from 0 to maxScroll (which is 0 on a page that doesn't scroll)
+                const entersAt = (r.top + window.scrollY) - box.bottom;
+                const leavesAt = (r.bottom + window.scrollY) - box.top;
+                return leavesAt > 0 && entersAt < maxScroll;
+            });
+            doodleElement.classList.toggle('doodle-covered', covered);
+        }
+
+        let doodleTimer = null;
+        function scheduleDoodleCheck() {
+            clearTimeout(doodleTimer);
+            doodleTimer = setTimeout(updateDoodle, 60);
+        }
+        new MutationObserver(mutations => {
+            if (mutations.some(m => m.target !== doodleElement)) scheduleDoodleCheck();
+        }).observe(document.body, {
+            subtree: true, childList: true, characterData: true,
+            attributes: true, attributeFilter: ['style', 'class', 'hidden']
+        });
+        window.addEventListener('resize', scheduleDoodleCheck);
+        window.addEventListener('orientationchange', scheduleDoodleCheck);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleDoodleCheck);
+
         // Initialize the app
         initApp();
+        scheduleDoodleCheck();
     </script>
 </body>
 </html>
