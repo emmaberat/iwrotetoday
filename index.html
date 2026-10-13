@@ -176,6 +176,14 @@
             pointer-events: none;
         }
 
+        .celebration-lang {
+            font-size: 0.4em;
+            color: #5A5A5A;
+            font-style: italic;
+            white-space: nowrap;
+            margin-left: 0.6em;
+        }
+
         .quote-container {
             max-width: 600px;
             opacity: 0;
@@ -429,6 +437,7 @@
             text-transform: none;
             letter-spacing: 0.04em;
             white-space: nowrap;
+            margin-left: 0.6em;
         }
 
         .intro-screen p {
@@ -626,6 +635,7 @@
 
             .nav-link {
                 white-space: nowrap;
+            margin-left: 0.6em;
                 font-size: 0.9rem;
                 padding: 0.5rem 0.5rem;
             }
@@ -876,10 +886,15 @@
         
         // Celebration phrases
         const celebrations = [
-            "Magnífico", "Fantastique", "Perfetto", "Отлично", "太棒了",
-            "Wunderbar", "Świetnie", "ممتاز", "เยี่ยม", "Génial",
-            "Gwych", "Iontach", "Braw", "素晴らしい", "शाबाश",
-            "Enhorabona", "Jòia"
+            { word: "Magnífico", lang: "Spanish" }, { word: "Fantastique", lang: "French" },
+            { word: "Perfetto", lang: "Italian" }, { word: "Отлично", lang: "Russian" },
+            { word: "太棒了", lang: "Chinese" }, { word: "Wunderbar", lang: "German" },
+            { word: "Świetnie", lang: "Polish" }, { word: "ممتاز", lang: "Arabic" },
+            { word: "เยี่ยม", lang: "Thai" }, { word: "Génial", lang: "French" },
+            { word: "Gwych", lang: "Welsh" }, { word: "Iontach", lang: "Irish" },
+            { word: "Braw", lang: "Scots" }, { word: "素晴らしい", lang: "Japanese" },
+            { word: "शाबाश", lang: "Hindi" }, { word: "Enhorabona", lang: "Catalan" },
+            { word: "Jòia", lang: "Occitan" }
         ];
 
         // Novel quotes database - Cleaned and corrected
@@ -1479,7 +1494,14 @@
         function showCelebration() {
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-            celebrationElement.textContent = celebrations[dayOfYear % celebrations.length];
+            const c = celebrations[dayOfYear % celebrations.length];
+            celebrationElement.textContent = '';
+            const wordSpan = document.createElement('span');
+            wordSpan.textContent = c.word;
+            const langSpan = document.createElement('span');
+            langSpan.className = 'celebration-lang';
+            langSpan.textContent = `(${c.lang})`;
+            celebrationElement.append(wordSpan, ' ', langSpan);
         }
 
         // Show quote
