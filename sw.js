@@ -1,8 +1,9 @@
 // Bump this when any cached file changes so phones pick up the new version.
-const CACHE = 'iwrotetoday-v18';
+const CACHE = 'iwrotetoday-v19';
 const FILES = [
     './',
     './index.html',
+    './content.json',
     './manifest.webmanifest',
     './icons/icon-192.png',
     './icons/icon-512.png',

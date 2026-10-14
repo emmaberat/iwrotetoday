@@ -890,466 +890,62 @@
         }
         
         // Celebration phrases
-        const celebrations = [
-            { word: "Magnífico", lang: "Spanish" }, { word: "Fantastique", lang: "French" },
-            { word: "Perfetto", lang: "Italian" }, { word: "Отлично", lang: "Russian" },
-            { word: "太棒了", lang: "Chinese" }, { word: "Wunderbar", lang: "German" },
-            { word: "Świetnie", lang: "Polish" }, { word: "ممتاز", lang: "Arabic" },
-            { word: "เยี่ยม", lang: "Thai" }, { word: "Génial", lang: "French" },
-            { word: "Gwych", lang: "Welsh" }, { word: "Iontach", lang: "Irish" },
-            { word: "Braw", lang: "Scots" }, { word: "素晴らしい", lang: "Japanese" },
-            { word: "शाबाश", lang: "Hindi" }, { word: "Enhorabona", lang: "Catalan" },
-            { word: "Jòia", lang: "Occitan" }
-        ];
+// Celebration words, quotes and words of the day live in content.json, so they can be
+        // added to without touching the app itself. The app shows the copy saved on the phone
+        // (works offline), and quietly fetches the live copy from the website to pick up new entries.
+        const LIVE_CONTENT_URL = 'https://emmaberat.github.io/iwrotetoday/content.json';
+        const CONTENT_LISTS = ['celebrations', 'novelQuotes', 'unusualWords', 'craftQuotes'];
+        let content = { bookshopAffiliateId: '', celebrations: [], novelQuotes: [], unusualWords: [], craftQuotes: [] };
+
+        function isValidContent(c) {
+            return !!c && CONTENT_LISTS.every(name => Array.isArray(c[name]) && c[name].length > 0);
+        }
+
+        async function fetchContent(url) {
+            const response = await fetch(url, { cache: 'no-cache' });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const fetched = await response.json();
+            if (!isValidContent(fetched)) throw new Error('content.json is missing a list');
+            return fetched;
+        }
+
+        async function loadContent() {
+            // 1. The last copy saved on this device: instant, and works offline
+            try {
+                const saved = JSON.parse(localStorage.getItem('content'));
+                if (isValidContent(saved)) content = saved;
+            } catch (e) {}
+
+            // 2. The copy that ships with the app or website, if nothing was saved yet
+            if (!isValidContent(content)) {
+                try { content = await fetchContent('content.json'); } catch (e) {}
+            }
+
+            // 3. The live copy, so new quotes arrive without an app update
+            try {
+                const live = await fetchContent(LIVE_CONTENT_URL);
+                content = live;
+                try { localStorage.setItem('content', JSON.stringify(live)); } catch (e) {}
+            } catch (e) {}
+        }
+
+        // Link to a book on Bookshop.org. With an affiliate number set in content.json,
+        // purchases made through the link earn commission for the account.
+        function bookshopLink(isbn) {
+            const id = String(content.bookshopAffiliateId || '').trim();
+            return id ? `https://bookshop.org/a/${id}/${isbn}` : `https://bookshop.org/book/${isbn}`;
+        }
+
 
         // Novel quotes database - Cleaned and corrected
-        const novelQuotes = [
-            {
-                text: "Zóra was a woman of principle, an open atheist. At the age of thirteen, a priest had told her that animals had no souls, and she had said, 'Well then, fuck you, Pops,' and walked out of church.",
-                author: "Téa Obreht",
-                book: "The Tiger's Wife",
-                year: 2011,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780385343831"
-                }
-            },
-            {
-                text: "Reality is frequently inaccurate.",
-                author: "Douglas Adams",
-                book: "The Restaurant at the End of the Universe",
-                year: 1980,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780345391810"
-                }
-            },
-            {
-                text: "'We are going to gossip about you,' Mahasen would say to him, 'in little pieces.' The word for 'gossip' meant cutting, too.",
-                author: "Leila Aboulela",
-                book: "The Translator",
-                year: 1999,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780802170262"
-                }
-            },
-            {
-                text: "The ships hung in the sky in much the same way that bricks don't.",
-                author: "Douglas Adams",
-                book: "The Hitchhiker's Guide to the Galaxy",
-                year: 1979,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780345391803"
-                }
-            },
-            {
-                text: "The sky above the port was the color of television, tuned to a dead channel.",
-                author: "William Gibson",
-                book: "Neuromancer",
-                year: 1984,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780441569595"
-                }
-            },
-            {
-                text: "So much had fallen into the sea. Hats fell in to the sea. Hearts fell into the sea. So much had fallen into the sea.",
-                author: "Edwidge Danticat",
-                book: "Claire of the Sea Light",
-                year: 2013,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780307472274"
-                }
-            },
-            {
-                text: "It could be verified that no princess was ever asked whether she wanted to be rescued and carried off by a dragon-slayer to a fate (no doubt) worse than death.",
-                author: "Naomi Mitchison",
-                book: "Travel Light",
-                year: 1952,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781931520140"
-                }
-            },
-            {
-                text: "Let us wonder at how X was just a rare letter until algebra came along and made it something special that can be unravelled to reveal inner value.",
-                author: "Bernardine Evaristo",
-                book: "Girl, Woman, Other",
-                year: 2019,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780802156983"
-                }
-            },
-            {
-                text: "What she loved most about America, Eilis thought on these mornings, was how the heating was kept on all night.",
-                author: "Colm Tóibín",
-                book: "Brooklyn",
-                year: 2009,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781439148952"
-                }
-            },
-            {
-                text: "Still, there are times I am bewildered by each mile I have traveled, each meal I have eaten, each person I have known, each room in which I have slept. As ordinary as it all appears, there are times when it is beyond my imagination.",
-                author: "Jhumpa Lahiri",
-                book: "Interpreter of Maladies",
-                year: 1999,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780395927205"
-                }
-            },
-            {
-                text: "We were the people who were not in the papers. We lived in the blank white spaces at the edges of print.",
-                author: "Margaret Atwood",
-                book: "The Handmaid's Tale",
-                year: 1985,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780385490818"
-                }
-            },
-            {
-                text: "It's bad enough... when a country gets colonized, but when the people do as well! That's the end, really, that's the end.",
-                author: "Tsitsi Dangarembga",
-                book: "Nervous Conditions",
-                year: 1988,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780954702335"
-                }
-            },
-            {
-                text: "When a person undergoes such a drastic transformation, there's simply nothing anyone else can do but sit back and let them get on with it.",
-                author: "Han Kang",
-                book: "The Vegetarian",
-                year: 2007,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780553448184"
-                }
-            },
-            {
-                text: "It's a poor sort of memory that only works backwards.",
-                author: "Lewis Carroll",
-                book: "Through the Looking-Glass",
-                year: 1871,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780486408781"
-                }
-            },
-            {
-                text: "It was a bright cold day in April, and the clocks were striking thirteen.",
-                author: "George Orwell",
-                book: "1984",
-                year: 1949,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780451524935"
-                }
-            },
-            {
-                text: "The snow in the mountains was melting and Bunny had been dead for several weeks before we came to understand the gravity of our situation.",
-                author: "Donna Tartt",
-                book: "The Secret History",
-                year: 1992,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781400031702"
-                }
-            },
-            {
-                text: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.",
-                author: "Jane Austen",
-                book: "Pride and Prejudice",
-                year: 1813,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780141439518"
-                }
-            },
-            {
-                text: "Happy families are all alike; every unhappy family is unhappy in its own way.",
-                author: "Leo Tolstoy",
-                book: "Anna Karenina",
-                year: 1877,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780143035008"
-                }
-            },
-            {
-                text: "Our father, the baron, was a dull man certainly, although not a bad one: dull because his life was dominated by thoughts that were out of step, as often happens in eras of transition.",
-                author: "Italo Calvino",
-                book: "The Baron in the Trees",
-                translator: "Ann Goldstein",
-                year: 1957,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780544959118"
-                }
-            },
-            {
-                text: "Sophia asked her grandmother what Heaven looked like, and Grandmother said it might be like the pasture they were just then walking by, on their way to the village over on the mainland. They stopped to look.",
-                author: "Tove Jansson",
-                book: "The Summer Book",
-                translator: "Thomas Teal",
-                year: 1972,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781590172681"
-                }
-            },
-            {
-                text: "When my hands are restless and I need to stim, I now imagine that they contain magic. That the twitchy feeling is just like fire trying to get out.",
-                author: "Elle McNicoll",
-                book: "A Kind of Spark",
-                year: 2020,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781913311056"
-                }
-            },
-            {
-                // Verse: each \n is a line break from the book
-                text: "While Vondie and JB\ndebate whether the new girl\nis a knockout or just beautiful,\na hottie or a cutie,\na lay-up or a dunk,\nI finish my vocabulary homework—\nand my brother's vocabulary homework,\nwhich I don't mind\nsince English is my favorite subject\nand he did the dishes for me last week.",
-                author: "Kwame Alexander",
-                book: "The Crossover",
-                year: 2014,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780544107717"
-                }
-            },
-            {
-                text: "I think I've been able to run for more than twenty years for a simple reason: It suits me. Or at least because I don't find it all that painful.",
-                author: "Haruki Murakami",
-                book: "What I Talk About When I Talk About Running",
-                translator: "Philip Gabriel",
-                year: 2007,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780307389831"
-                }
-            },
-            {
-                text: "'Say something!' she demanded, threatening to tear out our tongues. Little did she know that one of us was holding her tongue in her hand.",
-                author: "Itamar Vieira Junior",
-                book: "Crooked Plow",
-                translator: "Johnny Lorenz",
-                year: 2019,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781839766404"
-                }
-            },
-            {
-                text: "In the Hardenbergs' house there was an angel, August Wilhelm Bernhard, fair as wheat. After plain motherly Charlotte, the eldest, pale, wide-eyed Fritz, stumpy little Erasmus, easy-going Karl, open-hearted Sidonie, painstaking Anton, came the blonde Bernhard.",
-                author: "Penelope Fitzgerald",
-                book: "The Blue Flower",
-                year: 1995,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780395859971"
-                }
-            },
-            {
-                text: "Then, beyond her face reflected back to her, deeper within the pool, she saw a cluster of oysters bunched white in the shadow. It was almost too much to imagine putting her arm back into the cold, but she did, swearing.",
-                author: "Lauren Groff",
-                book: "The Vaster Wilds",
-                year: 2023,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780593418390"
-                }
-            }
-        ];
+
 
         // Word database - Cleaned and corrected
-        const unusualWords = [
-            {
-                word: "Petrichor",
-                definition: "A distinctive, earthy, usually pleasant odor that is associated with rainfall especially when following a warm, dry period and that arises from a combination of volatile plant oils and geosmin released from the soil into the air and by ozone carried by downdrafts.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Catawampus",
-                definition: "Askew; awry.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Defenestration",
-                definition: "A throwing of a person or thing out of a window.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Octothorpe",
-                definition: "The symbol #.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Biblioklept",
-                definition: "One who steals books.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Ineffable",
-                definition: "Incapable of being expressed in words; indescribable.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Resplendent",
-                definition: "Shining brilliantly; characterized by a glowing splendor.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Dibble",
-                definition: "A small hand implement used to make holes in the ground for plants, seeds, or bulbs.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Halcyon",
-                definition: "Characterized by happiness, great success, and prosperity; golden. Often used to describe an idyllic time in the past that is remembered as better than today.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Evanescent",
-                definition: "Tending to vanish like vapor.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Penumbra",
-                definition: "A space of partial illumination (as in an eclipse) between the perfect shadow on all sides and the full light.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Borborygmus",
-                definition: "Intestinal rumbling caused by moving gas.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Aureate",
-                definition: "Of a golden color or brilliance.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Sibilant",
-                definition: "Having, containing, or producing the sound of or a sound resembling that of the s or the sh in sash.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Nepenthe",
-                definition: "A potion used by the ancients to induce forgetfulness of pain or sorrow.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Susurrus",
-                definition: "A whispering or rustling sound.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Grok",
-                definition: "To understand profoundly and intuitively.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Lagniappe",
-                definition: "A small gift given to a customer by a merchant at the time of a purchase.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Abactor",
-                definition: "One who steals cattle.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Euge",
-                definition: "An act or expression of approval.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Lulliloo",
-                definition: "To shout joyously in the manner of various African peoples.",
-                source: "Merriam-Webster"
-            },
-            {
-                word: "Carriwitchet",
-                definition: "A hoaxing or riddling question.",
-                source: "Merriam-Webster"
-            }
-        ];
+
 
         // Quotes from books about writing, one per milestone, in the same order as MILESTONES
         // (3, 7, 14, 30, 60, 180 days). If there are fewer quotes than milestones, they repeat.
-        const craftQuotes = [
-            {
-                text: "I want to put a group of characters (perhaps a pair; perhaps even just one) in some sort of predicament and then watch them try to work themselves free.",
-                author: "Stephen King",
-                book: "On Writing: A Memoir of the Craft",
-                year: 2000,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781439156810"
-                }
-            },
-            {
-                text: "Once you try your hand at it, you soon find that [writing] isn't as peaceful a job as it seems. The whole process—sitting at your desk, focusing your mind like a laser beam, imagining something out of a blank horizon, creating a story, selecting the right words, one by one, keeping the whole flow of the story on track—requires far more energy, over a long period, than most people ever imagine. You might not move your body around, but there's a grueling, dynamic labor going on inside you.",
-                author: "Haruki Murakami",
-                book: "What I Talk About When I Talk About Running: A Memoir",
-                translator: "Philip Gabriel",
-                year: 2007,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780307389831"
-                }
-            },
-            {
-                text: "We always worry that we are copying someone else, that we don't have our own style. Don't worry. Writing is a communal act. Contrary to popular belief, a writer is not Prometheus alone on a hill full of fire.",
-                author: "Natalie Goldberg",
-                book: "Writing Down the Bones: Freeing the Writer Within",
-                year: 1986,
-                gender: "female",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781611803082"
-                }
-            },
-            {
-                text: "You and your younger brother are competing for leadership of the Labour Party; you are far more experienced and everyone expects you to win. How do you feel if you lose? What do you say to him?\n\nThe conflict between how we wish to be perceived and what we really feel is at the root of all character.",
-                author: "John Yorke",
-                book: "Into the Woods: How Stories Work and Why We Tell Them",
-                year: 2013,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781468310948"
-                }
-            },
-            {
-                text: "A pro views her work as craft, not art. Not because she believes art is devoid of a mystical dimension. On the contrary. She understands that all creative endeavor is holy, but she doesn't dwell on it. She knows if she thinks about that too much, it will paralyze her.",
-                author: "Steven Pressfield",
-                book: "The War of Art: Break Through the Blocks and Win Your Inner Creative Battles",
-                year: 2002,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9781936891023"
-                }
-            },
-            {
-                text: "Research must not become procrastination…Research is meat to feed the beasts of imagination and invention, never an end in itself.",
-                author: "Robert McKee",
-                book: "Story: Substance, Structure, Style, and the Principles of Screenwriting",
-                year: 1997,
-                gender: "male",
-                links: {
-                    bookshop: "https://bookshop.org/book/9780060391683"
-                }
-            }
-        ];
+
 
         // Milestones that trigger effects
         const MILESTONES = [3, 7, 14, 30, 60, 180];
@@ -1499,7 +1095,8 @@
         function showCelebration() {
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-            const c = celebrations[dayOfYear % celebrations.length];
+            if (!content.celebrations.length) return;
+            const c = content.celebrations[dayOfYear % content.celebrations.length];
             celebrationElement.textContent = '';
             const wordSpan = document.createElement('span');
             wordSpan.textContent = c.word;
@@ -1513,13 +1110,14 @@
         function showQuote() {
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-            const quoteData = novelQuotes[dayOfYear % novelQuotes.length];
+            if (!content.novelQuotes.length) return;
+            const quoteData = content.novelQuotes[dayOfYear % content.novelQuotes.length];
             
             quoteText.textContent = `"${quoteData.text}"`;
             quoteAttribution.textContent = formatAttribution(quoteData);
 
             // Set book link to Bookshop.org
-            bookLink.href = quoteData.links.bookshop;
+            bookLink.href = bookshopLink(quoteData.isbn);
         }
 
         // "Book, Author" plus ", trans. Name" for translated books
@@ -1535,11 +1133,15 @@
                 craftContainer.style.display = 'none';
                 return;
             }
-            const craft = craftQuotes[milestone % craftQuotes.length];
+            if (!content.craftQuotes.length) {
+                craftContainer.style.display = 'none';
+                return;
+            }
+            const craft = content.craftQuotes[milestone % content.craftQuotes.length];
             craftLabel.textContent = `you've written for ${userStreak} days! here's some writing wisdom for your journey`;
             craftText.textContent = `"${craft.text}"`;
             craftAttribution.textContent = formatAttribution(craft);
-            craftLink.href = craft.links.bookshop;
+            craftLink.href = bookshopLink(craft.isbn);
             craftContainer.style.display = 'block';
         }
 
@@ -1547,7 +1149,8 @@
         function showWord() {
             const today = new Date();
             const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-            const wordData = unusualWords[dayOfYear % unusualWords.length];
+            if (!content.unusualWords.length) return;
+            const wordData = content.unusualWords[dayOfYear % content.unusualWords.length];
             
             // Fade out the treasure message
             treasureMessage.style.animation = 'fadeInOut 1.5s forwards';
@@ -1832,6 +1435,7 @@
 
         // Initialize the app
         initApp();
+        loadContent();
         scheduleDoodleCheck();
     </script>
 </body>
