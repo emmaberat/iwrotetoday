@@ -283,6 +283,14 @@
       "year": 2023,
       "gender": "female",
       "isbn": "9780593418390"
+    },
+    {
+      "text": "A son will always be a son, they say. But a girl is like a goat. Good as long as she gives you milk and butter. But not worth crying over when it's time to make a stew.",
+      "author": "Patricia McCormick",
+      "book": "Sold",
+      "year": 2006,
+      "gender": "female",
+      "isbn": "9780786851720"
     }
   ],
   "unusualWords": [
