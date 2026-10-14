@@ -299,6 +299,14 @@
       "year": 2021,
       "gender": "female",
       "isbn": "9780525555278"
+    },
+    {
+      "text": "It's just that I don't want to be somebody's crush. If somebody likes me, I want them to like the real me, not what they think I am. And I don't want them to carry it around inside. I want them to show me, so I can feel it too.",
+      "author": "Stephen Chbosky",
+      "book": "The Perks of Being a Wallflower",
+      "year": 1999,
+      "gender": "male",
+      "isbn": "9780671027346"
     }
   ],
   "unusualWords": [
