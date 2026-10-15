@@ -1,0 +1,12 @@
+{
+  "appId": "com.emmaberat.iwrotetoday",
+  "appName": "I Wrote Today",
+  "webDir": "www",
+  "backgroundColor": "#F5F5F0",
+  "plugins": {
+    "SplashScreen": {
+      "backgroundColor": "#F5F5F0",
+      "launchAutoHide": true
+    }
+  }
+}

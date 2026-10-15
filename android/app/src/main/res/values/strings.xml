@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">I Wrote Today</string>
+    <string name="title_activity_main">I Wrote Today</string>
+    <string name="package_name">com.emmaberat.iwrotetoday</string>
+    <string name="custom_url_scheme">com.emmaberat.iwrotetoday</string>
+</resources>

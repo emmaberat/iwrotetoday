@@ -1310,7 +1310,8 @@
             const isAndroid = /Android/.test(navigator.userAgent);
             const isIOS = !isAndroid && (/iPhone|iPad|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)); // iPads report as Macs
-            const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const isStoreApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+            const installed = isStoreApp || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
             let dismissed = false;
             try { dismissed = localStorage.getItem('installTipDismissed') === 'yes'; } catch (e) {}
 
@@ -1350,7 +1351,7 @@
         setupInstallTip();
 
         // Offline support once the app is hosted (service workers don't run from a local file)
-        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+        if ('serviceWorker' in navigator && location.protocol !== 'file:' && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
             navigator.serviceWorker.register('sw.js');
         }
 

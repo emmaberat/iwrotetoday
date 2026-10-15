@@ -1,0 +1,25 @@
+{
+  "name": "i-wrote-today",
+  "version": "1.0.0",
+  "private": true,
+  "description": "I Wrote Today: a daily writing tracker. The website is the app; Capacitor wraps it for the App Store and Google Play.",
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "assets": "capacitor-assets generate --iosProject ios/App --androidProject android",
+    "sync": "npm run build && cap sync",
+    "ios": "npm run sync && cap open ios",
+    "android": "npm run sync && cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
