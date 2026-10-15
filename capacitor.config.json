@@ -7,6 +7,10 @@
     "SplashScreen": {
       "backgroundColor": "#F5F5F0",
       "launchAutoHide": true
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_smiley",
+      "iconColor": "#2E47B6"
     }
   }
 }

@@ -597,6 +597,14 @@
             max-width: 360px;
         }
 
+        .reminder-status {
+            margin-top: 1.25rem;
+            max-width: 360px;
+            color: #2D4D32;
+        }
+        #remove-reminder {
+            margin-top: 1rem;
+        }
         .reminder-text {
             max-width: 360px;
             color: #5A5A5A;
@@ -764,13 +772,16 @@
 
         <h1 class="screen-title">daily reminder</h1>
 
-        <p class="reminder-text">Pick a time and add a daily "did you write today?" reminder to your phone's calendar.</p>
+        <p class="reminder-text" id="reminder-text">Pick a time and add a daily "did you write today?" reminder to your phone's calendar.</p>
 
         <input type="time" class="time-input" id="reminder-time" value="20:00">
 
         <button class="secondary-btn" id="add-reminder">add to my calendar</button>
 
-        <p class="reminder-note">The App Store version will send its own notifications. Until then, your calendar does the reminding.</p>
+        <p class="reminder-status" id="reminder-status" role="status" hidden></p>
+        <button class="nav-link" id="remove-reminder" hidden>turn off reminder</button>
+
+        <p class="reminder-note" id="reminder-note">The phone app sends its own notifications. Until then, your calendar does the reminding.</p>
     </div>
 
     <div class="results-screen" id="results-screen">
@@ -1040,6 +1051,7 @@
             writingDays.add(todayKey);
             saveWritingDays();
             userStreak = currentStreak();
+            if (isNativeApp) scheduleReminders(); // checked in, so skip today's reminder
 
             // Switch to results screen
             welcomeScreen.style.display = 'none';
@@ -1245,14 +1257,19 @@
         reminderLink.addEventListener('click', function() {
             welcomeScreen.style.display = 'none';
             reminderScreen.style.display = 'flex';
+            renderReminderScreen();
         });
 
-        reminderTime.addEventListener('change', function() {
+        reminderTime.addEventListener('change', async function() {
             localStorage.setItem('reminderTime', reminderTime.value);
+            if (isNativeApp && reminderIsOn()) {
+                await scheduleReminders();
+                renderReminderScreen();
+            }
         });
 
-        // Download a repeating calendar event; the phone's calendar app handles the alert
-        addReminderButton.addEventListener('click', function() {
+        // In a browser: download a repeating calendar event; the phone's calendar app handles the alert
+        function downloadCalendarReminder() {
             const [hours, minutes] = (reminderTime.value || '20:00').split(':');
             const start = dateKey(new Date()).replace(/-/g, '') + `T${hours}${minutes}00`;
             const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -1283,7 +1300,118 @@
             document.body.appendChild(link);
             link.click();
             link.remove();
+        }
+
+        // In the iPhone and Android apps: real notifications, scheduled on the phone itself.
+        // They are set for the next REMINDER_DAYS days and topped up every time the app opens;
+        // today's is skipped when you have already checked in.
+        const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        const REMINDER_DAYS = 30;
+        const reminderText = document.getElementById('reminder-text');
+        const reminderStatus = document.getElementById('reminder-status');
+        const reminderNote = document.getElementById('reminder-note');
+        const removeReminderButton = document.getElementById('remove-reminder');
+
+        function notificationsPlugin() {
+            return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+        }
+
+        function reminderIsOn() {
+            try { return localStorage.getItem('reminderEnabled') === 'yes'; } catch (e) { return false; }
+        }
+
+        function setReminderOn(on) {
+            try { localStorage.setItem('reminderEnabled', on ? 'yes' : 'no'); } catch (e) {}
+        }
+
+        function renderReminderScreen(message) {
+            if (!isNativeApp || !notificationsPlugin()) return;
+            const on = reminderIsOn();
+            reminderText.textContent = "Pick a time and I'll remind you every day to check in. If you've already written that day, I'll stay quiet.";
+            addReminderButton.textContent = on ? 'update reminder' : 'turn on reminder';
+            removeReminderButton.hidden = !on;
+            reminderNote.hidden = true;
+            const status = message || (on ? `Reminder is on: every day at ${reminderTime.value}.` : '');
+            reminderStatus.textContent = status;
+            reminderStatus.hidden = !status;
+        }
+
+        // Replaces the phone's pending reminders with the next REMINDER_DAYS days' worth.
+        // Returns 'on', 'off', 'denied' or 'error'.
+        async function scheduleReminders() {
+            const plugin = notificationsPlugin();
+            if (!isNativeApp || !plugin) return 'off';
+            try {
+                await plugin.cancel({ notifications: Array.from({ length: REMINDER_DAYS }, (_, i) => ({ id: i + 1 })) });
+                if (!reminderIsOn()) return 'off';
+                const permission = await plugin.checkPermissions();
+                if (permission.display !== 'granted') return 'denied';
+
+                const [hours, minutes] = (reminderTime.value || '20:00').split(':').map(Number);
+                const now = new Date();
+                const doneToday = writingDays.has(dateKey(now));
+                const notifications = [];
+                for (let i = 0; i < REMINDER_DAYS; i++) {
+                    const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, hours, minutes, 0);
+                    if (at <= now || (i === 0 && doneToday)) continue;
+                    notifications.push({
+                        id: i + 1,
+                        title: 'i wrote today',
+                        body: 'did you write today?',
+                        smallIcon: 'ic_stat_smiley',
+                        schedule: { at, allowWhileIdle: true }
+                    });
+                }
+                if (notifications.length) await plugin.schedule({ notifications });
+                return 'on';
+            } catch (e) {
+                return 'error';
+            }
+        }
+
+        async function turnOnReminder() {
+            const plugin = notificationsPlugin();
+            try {
+                let permission = await plugin.checkPermissions();
+                if (permission.display === 'prompt' || permission.display === 'prompt-with-rationale') {
+                    permission = await plugin.requestPermissions();
+                }
+                if (permission.display !== 'granted') {
+                    setReminderOn(false);
+                    renderReminderScreen("Notifications are turned off for I Wrote Today. You can allow them in your phone's Settings, then try again.");
+                    return;
+                }
+                localStorage.setItem('reminderTime', reminderTime.value);
+                setReminderOn(true);
+                const result = await scheduleReminders();
+                renderReminderScreen(result === 'on'
+                    ? `Done! I'll remind you every day at ${reminderTime.value}.`
+                    : 'Something went wrong setting the reminder. Please try again.');
+            } catch (e) {
+                renderReminderScreen('Something went wrong setting the reminder. Please try again.');
+            }
+        }
+
+        addReminderButton.addEventListener('click', function() {
+            if (isNativeApp && notificationsPlugin()) {
+                turnOnReminder();
+            } else {
+                downloadCalendarReminder();
+            }
         });
+
+        removeReminderButton.addEventListener('click', async function() {
+            setReminderOn(false);
+            await scheduleReminders();
+            renderReminderScreen('Reminder turned off.');
+        });
+
+        // Keep the next 30 days topped up whenever the app is opened or comes back to the front
+        if (isNativeApp) {
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') scheduleReminders();
+            });
+        }
 
         // Back buttons on the history and reminder screens
         document.querySelectorAll('[data-back]').forEach(button => {
@@ -1437,6 +1565,7 @@
         // Initialize the app
         initApp();
         loadContent();
+        if (isNativeApp) scheduleReminders(); // after initApp, so saved check-ins are known
         scheduleDoodleCheck();
     </script>
 </body>

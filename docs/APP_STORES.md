@@ -65,7 +65,11 @@ Bump the version first: Xcode > App > General (Version and Build) and `versionCo
 
 ## Known things to check before submitting
 
-- The **daily reminder** screen hands out a calendar file (.ics). That works in a browser but not inside an
-  iPhone app. Real phone notifications are the better route inside the apps.
-- Apple can reject apps that are only a repackaged website. Native notifications help with that.
+- **Daily reminders are real phone notifications** inside the apps (the browser site still downloads a calendar
+  file). Test on a real device: turn the reminder on, allow notifications, set a time a couple of minutes ahead,
+  and lock the phone. On Android 13+ the permission prompt appears the first time. Android reminders can arrive a
+  few minutes late (exact alarms are deliberately not requested). The app schedules the next 30 days each time it
+  is opened, so a reminder stops only if the app isn't opened for a month. Today's reminder is skipped once you
+  have checked in.
+- Apple can reject apps that are only a repackaged website. The native notifications help with that.
 - The app uses `viewport-fit=cover` and safe-area padding; check the top and bottom on a real iPhone with a notch.
