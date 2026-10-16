@@ -1,6 +1,6 @@
 {
   "_readme": "Add new entries to the end of any list and push. Quotes need an isbn (10 or 13 digits) to link to Bookshop.org. Set bookshopAffiliateId to your own Bookshop.org affiliate number to earn commission on purchases (leave empty for plain links).",
-  "bookshopAffiliateId": "",
+  "bookshopAffiliateId": "116684",
   "celebrations": [
     {
       "word": "Magnífico",

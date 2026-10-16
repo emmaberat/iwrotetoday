@@ -1,5 +1,5 @@
 // Bump this when any cached file changes so phones pick up the new version.
-const CACHE = 'iwrotetoday-v20';
+const CACHE = 'iwrotetoday-v21';
 const FILES = [
     './',
     './index.html',
