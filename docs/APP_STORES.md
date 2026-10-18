@@ -71,5 +71,7 @@ Bump the version first: Xcode > App > General (Version and Build) and `versionCo
   few minutes late (exact alarms are deliberately not requested). The app schedules the next 30 days each time it
   is opened, so a reminder stops only if the app isn't opened for a month. Today's reminder is skipped once you
   have checked in.
+- **Red badge:** reminders that arrive from 18:00 onwards put a red "1" on the app icon (iPhone) or a dot/number
+  (Android). It clears when she checks in or turns the reminder off. Test this on a real phone.
 - Apple can reject apps that are only a repackaged website. The native notifications help with that.
 - The app uses `viewport-fit=cover` and safe-area padding; check the top and bottom on a real iPhone with a notch.

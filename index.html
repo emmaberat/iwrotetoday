@@ -1341,13 +1341,22 @@
             if (!isNativeApp || !plugin) return 'off';
             try {
                 await plugin.cancel({ notifications: Array.from({ length: REMINDER_DAYS }, (_, i) => ({ id: i + 1 })) });
-                if (!reminderIsOn()) return 'off';
+                if (!reminderIsOn()) {
+                    if (plugin.removeAllDeliveredNotifications) { try { await plugin.removeAllDeliveredNotifications(); } catch (e) {} }
+                    return 'off';
+                }
                 const permission = await plugin.checkPermissions();
                 if (permission.display !== 'granted') return 'denied';
 
                 const [hours, minutes] = (reminderTime.value || '20:00').split(':').map(Number);
                 const now = new Date();
                 const doneToday = writingDays.has(dateKey(now));
+                // Clear the red badge / delivered reminder once she has written today
+                if (doneToday && plugin.removeAllDeliveredNotifications) {
+                    try { await plugin.removeAllDeliveredNotifications(); } catch (e) { /* not critical */ }
+                }
+                // The red badge only appears with reminders that arrive from 18:00 onwards
+                const showBadge = hours >= 18;
                 const notifications = [];
                 for (let i = 0; i < REMINDER_DAYS; i++) {
                     const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, hours, minutes, 0);
@@ -1357,6 +1366,7 @@
                         title: 'i wrote today',
                         body: 'did you write today?',
                         smallIcon: 'ic_stat_smiley',
+                        ...(showBadge ? { badge: 1 } : {}),
                         schedule: { at, allowWhileIdle: true }
                     });
                 }
