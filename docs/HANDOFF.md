@@ -15,6 +15,8 @@ A one-tap daily writing check-in. No writing happens in the app; it only records
 - **My writing days:** a calendar of days written.
 - **Daily reminder:** in the store apps, real phone notifications. In a browser, a downloadable `.ics` calendar
   file (the original behaviour).
+- **Share and rate:** the how-it-works page has "share this app" (the native share sheet in the apps, the browser's share
+  or copy-link on the website) and, in the Android app only, "rate on google play".
 - **How it works / intro / privacy** pages. Lowercase "i wrote today" on the how-it-works page is deliberate.
 - **Smiley doodle with "EB" initials** in the bottom corner of each page. It hides itself when it would overlap
   content.
@@ -30,8 +32,8 @@ store update (see section 6).
 - **PWA:** `manifest.webmanifest` + `sw.js` (network-first service worker, versioned cache).
 - **Hosting:** GitHub Pages, served straight from `main`.
 - **Native apps:** Capacitor 8.5.3 wraps the same files for iOS (Swift Package Manager, no CocoaPods) and
-  Android. Node 22 or newer required. Plugin: `@capacitor/local-notifications` 8.3.1, used without a bundler via
-  `window.Capacitor.Plugins.LocalNotifications`. Icons and splash are generated with `@capacitor/assets` 3.0.5.
+  Android. Node 22 or newer required. Plugins: `@capacitor/local-notifications` 8.3.1 and `@capacitor/share` 8.0.3, used
+  without a bundler via `window.Capacitor.Plugins.LocalNotifications` / `.Share`. Icons and splash are generated with `@capacitor/assets` 3.0.5.
 - **Fonts/images:** system Georgia font (no web font downloads); images are local SVG/PNG.
 - **Tests:** none in the repo. During development I used throwaway Playwright scripts (Chromium, mocked clock,
   mocked Capacitor plugin). They were not committed.
@@ -112,7 +114,7 @@ the next time they open online. Add new entries to the end of a list. Each novel
 
 Current content: 29 novel quotes, 17 celebration words, 22 unusual words, 6 craft quotes.
 
-**Any change to `index.html`, images or icons:** bump `CACHE` in `sw.js` (currently `iwrotetoday-v23`), then
+**Any change to `index.html`, images or icons:** bump `CACHE` in `sw.js` (currently `iwrotetoday-v24`), then
 `npm run build && npx cap sync`, commit and push. App store users only get code/design changes through a new
 store build.
 
