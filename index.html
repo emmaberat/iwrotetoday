@@ -467,6 +467,19 @@
             margin: 0.5rem 0 1.75rem;
         }
 
+        /* Share and rate links on the "how it works" page */
+        .intro-share {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.25rem;
+            margin: -0.75rem 0 1.5rem;
+        }
+
+        .intro-share a.nav-link {
+            text-decoration: none;
+        }
+
         .history-screen,
         .reminder-screen {
             display: none;
@@ -711,6 +724,11 @@
         <p>After checking in for 3, 7, 14, 30, 60 and 180 days, you'll also receive some writing wisdom from authors who've walked the road.</p>
 
         <p class="intro-note">Everything stays private, on your own phone.</p>
+
+        <div class="intro-share">
+            <button class="nav-link" id="share-app">share this app</button>
+            <a class="nav-link" id="rate-app" href="https://play.google.com/store/apps/details?id=com.emmaberat.iwrotetoday" target="_blank" rel="noopener" hidden>rate on google play</a>
+        </div>
 
         <!-- Same add-to-home-screen tip as on the main screen, so first-time visitors see it straight away -->
         <div class="install-tip intro-install-tip" hidden>
@@ -1025,6 +1043,34 @@
             welcomeScreen.style.display = 'none';
             introScreen.style.display = 'flex';
             window.scrollTo(0, 0);
+        });
+
+        // Share and rate. The Android app shares its Play Store page and offers a rating link;
+        // the iPhone app and the website share the website.
+        const SITE_URL = 'https://emmaberat.github.io/iwrotetoday/';
+        const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.emmaberat.iwrotetoday';
+        const isAndroidApp = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android');
+        const shareAppButton = document.getElementById('share-app');
+
+        if (isAndroidApp) document.getElementById('rate-app').hidden = false;
+
+        shareAppButton.addEventListener('click', async function() {
+            const url = isAndroidApp ? PLAY_URL : SITE_URL;
+            const text = 'I Wrote Today: one tap a day for your writing, and a line from a novel as your reward.';
+            const sharePlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+            try {
+                if (isNativeApp && sharePlugin) {
+                    await sharePlugin.share({ title: 'I Wrote Today', text: text, url: url, dialogTitle: 'Share I Wrote Today' });
+                } else if (navigator.share) {
+                    await navigator.share({ title: 'I Wrote Today', text: text, url: url });
+                } else {
+                    await navigator.clipboard.writeText(url);
+                    shareAppButton.textContent = 'link copied';
+                    setTimeout(function() { shareAppButton.textContent = 'share this app'; }, 2000);
+                }
+            } catch (e) {
+                // Closing the share sheet counts as an error; nothing to do
+            }
         });
 
         // Handle check-in
